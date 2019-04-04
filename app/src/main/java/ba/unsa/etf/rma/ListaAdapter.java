@@ -3,20 +3,17 @@ package ba.unsa.etf.rma;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Filter;
 import android.widget.Filterable;
-import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import com.maltaisn.icondialog.IconView;
 
 import java.util.ArrayList;
-
-import ba.unsa.etf.rma.Kviz;
 
 public class ListaAdapter extends BaseAdapter implements Filterable {
     private Activity activity;
@@ -25,7 +22,7 @@ public class ListaAdapter extends BaseAdapter implements Filterable {
     public Resources res;
     CustomFilter cf;
     Kategorija kat = new Kategorija();
-    Kviz tempValues=null;
+    Kviz trenutniKviz =null;
 
 
     public ListaAdapter(Activity a, ArrayList<Kviz> d, Resources resLocal) {
@@ -64,7 +61,7 @@ public class ListaAdapter extends BaseAdapter implements Filterable {
     private static class ViewHolder{
 
         public TextView textImeKviza;
-        public ImageView image;
+        public IconView image;
 
     }
 
@@ -80,7 +77,7 @@ public class ListaAdapter extends BaseAdapter implements Filterable {
 
             holder = new ViewHolder();
             holder.textImeKviza = (TextView) vi.findViewById(R.id.imeKvizaLW);
-            holder.image = (ImageView)vi.findViewById(R.id.image);
+            holder.image = (IconView)vi.findViewById(R.id.image);
 
             vi.setTag( holder );
         }
@@ -89,17 +86,19 @@ public class ListaAdapter extends BaseAdapter implements Filterable {
 
         if(data.size()<=0)
         {
-            holder.textImeKviza.setText("No Data");
+            holder.textImeKviza.setText("Nema podataka");
 
         }
         else
         {
-            tempValues = null;
-            tempValues = (Kviz) data.get( position );
+            trenutniKviz = null;
+            trenutniKviz = (Kviz) data.get( position );
 
-            holder.textImeKviza.setText( tempValues.getNaziv() );
-            holder.image.setImageResource(res.getIdentifier("ba.unsa.etf.rma:drawable/" + tempValues.getKategorija().getId(),null,null));
-
+            holder.textImeKviza.setText( trenutniKviz.getNaziv() );
+            if(!trenutniKviz.getKategorija().getId().equals("addkviz"))
+                holder.image.setIcon(Integer.parseInt(trenutniKviz.getKategorija().getId()));
+            else
+                holder.image.setImageResource(res.getIdentifier("ba.unsa.etf.rma:drawable/" + trenutniKviz.getKategorija().getId(),null,null));
         }
         return vi;
     }

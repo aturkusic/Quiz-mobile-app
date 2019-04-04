@@ -37,7 +37,7 @@ public class KvizoviAkt extends AppCompatActivity {
         cat.setId("science");
         testni.setNaziv("Testni");
         testni.setKategorija(cat);
-        kvizovi.add(testni);
+        //kvizovi.add(testni);
         ArrayList<String> odg = new ArrayList<>();
         odg.add("da");
         odg.add("ne");
@@ -48,7 +48,7 @@ public class KvizoviAkt extends AppCompatActivity {
 //////////////////////////////////////
 
         dodajAddKvizNaKraj();
-        dodajAddKategorijuUSpinner();
+        dodajSviKategorijuUSpinner();
 
 
         Resources res = getResources();
@@ -117,6 +117,7 @@ public class KvizoviAkt extends AppCompatActivity {
             if (resultCode == RESULT_OK) {
                 // Get String data from Intent
                 Kviz kviz = (Kviz) data.getSerializableExtra("povratniKviz");
+                Kategorija kategorija = (Kategorija) data.getSerializableExtra("novaKategorija");
                 if(!daLiJeIzmjena)
                     kvizovi.add(kvizovi.size() - 1, kviz);
                 else {
@@ -124,19 +125,18 @@ public class KvizoviAkt extends AppCompatActivity {
                     kvizovi.get(pozicija).setKategorija(kviz.getKategorija());
                     kvizovi.get(pozicija).setPitanja(kviz.getPitanja());
                 }
+                if(kategorija != null) {
+                    kategorije.add(kategorije.size(), kategorija);
+                }
                 adapter.notifyDataSetChanged();
             }
         }
     }
 
-    private void dodajAddKategorijuUSpinner() {
+    private void dodajSviKategorijuUSpinner() {
         svi = new Kategorija();
         svi.setNaziv("Svi");
         kategorije.add(svi);
-        Kategorija testna = new Kategorija();
-        testna.setNaziv("Science");
-        testna.setId("science");
-        kategorije.add(testna);
     }
 
     private void dodajAddKvizNaKraj() {

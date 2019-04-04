@@ -17,6 +17,7 @@ import java.util.ArrayList;
 
 public class SpinnerAdapter extends ArrayAdapter<Kategorija> {
     ArrayList<Kategorija> lista;
+    private boolean drugaAktivnost = false;
 
     public SpinnerAdapter(Context context, ArrayList<Kategorija> countryList) {
         super(context, 0, countryList);
@@ -51,6 +52,11 @@ public class SpinnerAdapter extends ArrayAdapter<Kategorija> {
         return convertView;
     }
 
+    @Override
+    public int getCount() {
+        return lista != null ? lista.size() : 0;
+    }
+
     public int getPozicija(Kategorija k) {
         int i = 0;
         for(Kategorija k1 : lista) {
@@ -58,6 +64,14 @@ public class SpinnerAdapter extends ArrayAdapter<Kategorija> {
             i++;
         }
         return i;
+    }
+
+    public boolean isDrugaAktivnost() {
+        return drugaAktivnost;
+    }
+
+    public void setDrugaAktivnost(boolean drugaAktivnost) {
+        this.drugaAktivnost = drugaAktivnost;
     }
 }
 

@@ -19,12 +19,17 @@ import java.util.ArrayList;
 
 public class DodajKvizAkt extends AppCompatActivity {
     private static final int SECOND_ACTIVITY_REQUEST_CODE = 0;
+    private static final int SECOND_ACTIVITY_REQUEST_CODE1 = 1;
     ArrayList<Pitanje> pitanja = new ArrayList<>();
     ListaPitanjaAdapter adapter;
     ListaPitanjaAdapter adapter1;
     String naziv;
     Kategorija kategorija;
+    Kategorija dodanaKategorija = null;
     Kviz kviz = new Kviz();
+    ArrayList<Kategorija> kategorije;
+    SpinnerAdapter spinnerAdapter;
+     Spinner spinner;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,24 +40,26 @@ public class DodajKvizAkt extends AppCompatActivity {
         final ListView listaPitanja = (ListView) findViewById(R.id.lvDodanaPitanja);
         ListView listaMogucihPitanja = (ListView) findViewById(R.id.lvMogucaPitanja);
         final EditText imeKviza = (EditText) findViewById(R.id.etNaziv);
-        final Spinner spinner = (Spinner) findViewById(R.id.spKategorije);
+        spinner = (Spinner) findViewById(R.id.spKategorije);
         Button dugme = (Button) findViewById(R.id.btnDodajKviz);
 
         //dobavljanje podataka putem intenta i postavljanje default vrijednosti kao eleent liste za dodavanje pitanja
         Intent intent = getIntent();
         kategorija = (Kategorija) intent.getSerializableExtra("kategorija");
-        final ArrayList<Kategorija> kategorije = (ArrayList<Kategorija>) intent.getSerializableExtra("kategorije");
+        kategorije = (ArrayList<Kategorija>) intent.getSerializableExtra("kategorije");
         pitanja = (ArrayList<Pitanje>) intent.getSerializableExtra("pitanja");
         naziv = intent.getStringExtra("naziv");
         kviz = (Kviz) intent.getSerializableExtra("kviz");
         String svrha = intent.getStringExtra("svrha");
         Pitanje dodajPitanje = new Pitanje();
         dodajPitanje.setNaziv("Dodaj Pitanje");
-        pitanja.add(dodajPitanje);
-        Kategorija addKat = new Kategorija();
-        addKat.setNaziv("Dodaj kategoriju");
-        addKat.setId("addkviz");
-        kategorije.add(addKat);
+        if(pitanja.size() == 0 || !pitanja.get(pitanja.size() - 1).getNaziv().equalsIgnoreCase("Dodaj pitanje"))
+            pitanja.add(dodajPitanje);
+            Kategorija addKat = new Kategorija();
+            addKat.setNaziv("Dodaj kategoriju");
+            addKat.setId("addkviz");
+            kategorije.add(addKat);
+            kategorije.remove(0);
 
 
         if(svrha.equals("izmjena")) dugme.setText("Izmijeni kviz");
@@ -65,7 +72,8 @@ public class DodajKvizAkt extends AppCompatActivity {
         listaPitanja.setAdapter( adapter );
         adapter1 = new ListaPitanjaAdapter(this, listaMogucih, resources );
         listaMogucihPitanja.setAdapter( adapter1 );
-        SpinnerAdapter spinnerAdapter = new ba.unsa.etf.rma.SpinnerAdapter(this, kategorije);
+        spinnerAdapter = new ba.unsa.etf.rma.SpinnerAdapter(this, kategorije);
+        ((ba.unsa.etf.rma.SpinnerAdapter) spinnerAdapter).setDrugaAktivnost(true);
         spinner.setAdapter(spinnerAdapter);
         imeKviza.setText(naziv);
 
@@ -100,7 +108,7 @@ public class DodajKvizAkt extends AppCompatActivity {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 if (position == kategorije.size() - 1) {
                     Intent intent = new Intent(DodajKvizAkt.this, DodajKategorijuAkt.class);
-                    startActivity(intent);
+                    startActivityForResult(intent, SECOND_ACTIVITY_REQUEST_CODE1);
                 }
             }
 
@@ -122,11 +130,12 @@ public class DodajKvizAkt extends AppCompatActivity {
                     Toast.makeText(DodajKvizAkt.this, "Odaberite drugu ili dodajte novu kategoriju.", Toast.LENGTH_LONG).show();
                     return;
                 }
-                imeKviza.setBackgroundColor(Color.WHITE);
+                imeKviza.setBackgroundColor(0x00000000);
                 kategorija = (Kategorija) spinner.getSelectedItem();
                 kviz = new Kviz(imeKviza.getText().toString(), pitanja, kategorija);
                 Intent povratni = new Intent();
                 povratni.putExtra("povratniKviz", kviz);
+                povratni.putExtra("novaKategorija", dodanaKategorija);
                 setResult(Activity.RESULT_OK, povratni);
                 finish();
 
@@ -143,6 +152,12 @@ public class DodajKvizAkt extends AppCompatActivity {
                 Pitanje pitanje = (Pitanje) data.getSerializableExtra("povratnoPitanje");
                 pitanja.add(pitanja.size() - 1, pitanje);
                 adapter.notifyDataSetChanged();
+            }
+        } else if(requestCode == SECOND_ACTIVITY_REQUEST_CODE1) {
+            if (resultCode == RESULT_OK) {
+                Kategorija kategorija = (Kategorija) data.getSerializableExtra("povratnaKategorija");
+                dodanaKategorija = kategorija;
+                kategorije.add(kategorije.size() - 1, kategorija);
             }
         }
     }

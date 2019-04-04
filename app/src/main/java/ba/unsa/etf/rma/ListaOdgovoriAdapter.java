@@ -78,7 +78,7 @@ public class ListaOdgovoriAdapter extends BaseAdapter {
 
         if(data.size()<=0)
         {
-            holder.odgovor.setText("No Data");
+            holder.odgovor.setText("Nema podataka");
         }
         else
         {
@@ -88,9 +88,9 @@ public class ListaOdgovoriAdapter extends BaseAdapter {
             holder.odgovor.setText( tempValues );
 
         }
-        holder.odgovor.setTextColor(Color.BLACK);
+        holder.odgovor.setBackgroundColor(0x00000000);
         if(position == pozicija)
-            holder.odgovor.setTextColor(Color.GREEN);
+            holder.odgovor.setBackgroundColor(Color.GREEN);
         return vi;
     }
 }

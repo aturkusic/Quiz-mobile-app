@@ -70,7 +70,7 @@ public class ListaPitanjaAdapter extends BaseAdapter {
 
         if(data.size()<=0)
         {
-            holder.imePitanjaText.setText("No Data");
+            holder.imePitanjaText.setText("Nema podataka");
 
         }
         else
@@ -78,7 +78,8 @@ public class ListaPitanjaAdapter extends BaseAdapter {
             tempValues = null;
             tempValues = (Pitanje) data.get( position );
 
-            holder.imePitanjaText.setText( tempValues.getNaziv() );
+            if(tempValues != null)
+                holder.imePitanjaText.setText( tempValues.getNaziv() );
 
         }
         return vi;

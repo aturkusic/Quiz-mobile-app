@@ -1,5 +1,7 @@
 package ba.unsa.etf.rma;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -14,18 +16,21 @@ import com.maltaisn.icondialog.IconDialog;
 public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.Callback {
 
     private Icon[] selectedIcons;
+    EditText imeKategorije;
+    EditText imeIkone;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.dodaj_kategoriju);
 
-        final EditText imeKategorije = (EditText) findViewById(R.id.etNaziv);
-        final EditText imeIkone = (EditText) findViewById(R.id.etIkona);
+        imeKategorije = (EditText) findViewById(R.id.etNaziv);
+        imeIkone = (EditText) findViewById(R.id.etIkona);
         Button dodajIkonuBtn = (Button) findViewById(R.id.btnDodajIkonu);
         Button dodajKategorijuBtn = (Button) findViewById(R.id.btnDodajKategoriju);
 
         final IconDialog iconDialog = new IconDialog();
+        imeIkone.setEnabled(false);
 
         dodajIkonuBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -46,8 +51,11 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
                     imeIkone.setBackgroundColor(Color.RED);
                     return;
                 }
-                imeKategorije.setBackgroundColor(Color.WHITE);
-                imeIkone.setBackgroundColor(Color.WHITE);
+                imeKategorije.setBackgroundColor(0x00000000);
+                imeIkone.setBackgroundColor(0x00000000);
+                Intent povratni = new Intent();
+                povratni.putExtra("povratnaKategorija", new Kategorija(imeKategorije.getText().toString(), imeIkone.getText().toString()));
+                setResult(Activity.RESULT_OK, povratni);
                 finish();
             }
         });
@@ -56,5 +64,6 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
     @Override
     public void onIconDialogIconsSelected(Icon[] icons) {
         selectedIcons = icons;
+        imeIkone.setText(Integer.toString(selectedIcons[0].getId()));
     }
 }

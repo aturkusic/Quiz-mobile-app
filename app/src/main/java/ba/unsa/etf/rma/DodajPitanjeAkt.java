@@ -69,7 +69,7 @@ public class DodajPitanjeAkt extends AppCompatActivity {
                     odgovor.setBackgroundColor(Color.RED);
                     odgovor.setHint("Ne smije biti prazno");
                 } else {
-                    odgovor.setBackgroundColor(Color.WHITE);
+                    odgovor.setBackgroundColor(0x00000000);
                     odgovori.add(odgovor.getText().toString());
                     adapter.notifyDataSetChanged();
                     pitanje.getOdgovori().add(odgovor.getText().toString());
@@ -89,7 +89,7 @@ public class DodajPitanjeAkt extends AppCompatActivity {
                     odgovor.setBackgroundColor(Color.RED);
                     odgovor.setHint("Ne smije biti prazno");
                 } else {
-                    odgovor.setBackgroundColor(Color.WHITE);
+                    odgovor.setBackgroundColor(0x00000000);
                     odgovori.add(odgovor.getText().toString());
                     pozicijaTacnog = odgovori.size() - 1;
                     adapter.setPozicija(pozicijaTacnog);
