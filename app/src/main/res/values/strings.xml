@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Kvizovi</string>
+    <string name="dodaj_ikonu">Dodaj ikonu</string>
+    <string name="spasi_kategoriju">Spasi Kategoriju</string>
+    <string name="ikona">Ikona</string>
+    <string name="naziv_kategorije">Naziv Kategorije</string>
+    <string name="pitanja_u_kvizu">Pitanja u kvizu</string>
+    <string name="moguca_pitanja">Moguca pitanja</string>
+    <string name="dodaj_kviz">Dodaj Kviz</string>
+    <string name="odgovori">Odgovori</string>
+    <string name="dodaj">Dodaj</string>
+    <string name="dodaj_tacan">Dodaj tacan</string>
+</resources>
