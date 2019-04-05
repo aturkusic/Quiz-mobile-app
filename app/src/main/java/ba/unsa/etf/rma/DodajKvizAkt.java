@@ -73,7 +73,6 @@ public class DodajKvizAkt extends AppCompatActivity {
         adapter1 = new ListaPitanjaAdapter(this, listaMogucih, resources );
         listaMogucihPitanja.setAdapter( adapter1 );
         spinnerAdapter = new ba.unsa.etf.rma.SpinnerAdapter(this, kategorije);
-        ((ba.unsa.etf.rma.SpinnerAdapter) spinnerAdapter).setDrugaAktivnost(true);
         spinner.setAdapter(spinnerAdapter);
         imeKviza.setText(naziv);
 

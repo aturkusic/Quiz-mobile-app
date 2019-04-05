@@ -17,7 +17,6 @@ import java.util.ArrayList;
 
 public class SpinnerAdapter extends ArrayAdapter<Kategorija> {
     ArrayList<Kategorija> lista;
-    private boolean drugaAktivnost = false;
 
     public SpinnerAdapter(Context context, ArrayList<Kategorija> countryList) {
         super(context, 0, countryList);
@@ -43,7 +42,8 @@ public class SpinnerAdapter extends ArrayAdapter<Kategorija> {
         }
         TextView textViewName = convertView.findViewById(R.id.sp_tekst_red);
 
-        Kategorija currentItem = getItem(position);
+        if(position == lista.size()) return convertView;
+            Kategorija currentItem = getItem(position);
 
         if (currentItem != null) {
             textViewName.setText(currentItem.getNaziv());
@@ -66,12 +66,5 @@ public class SpinnerAdapter extends ArrayAdapter<Kategorija> {
         return i;
     }
 
-    public boolean isDrugaAktivnost() {
-        return drugaAktivnost;
-    }
-
-    public void setDrugaAktivnost(boolean drugaAktivnost) {
-        this.drugaAktivnost = drugaAktivnost;
-    }
 }
 
