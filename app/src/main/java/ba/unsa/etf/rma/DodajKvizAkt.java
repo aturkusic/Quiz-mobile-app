@@ -6,6 +6,7 @@ import android.content.res.Resources;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -26,10 +27,11 @@ public class DodajKvizAkt extends AppCompatActivity {
     String naziv;
     Kategorija kategorija;
     Kategorija dodanaKategorija = null;
-    Kviz kviz = new Kviz();
+    Kviz kviz = new Kviz(); //odabrani kviz sa glavne aktivnosti
     ArrayList<Kategorija> kategorije;
     SpinnerAdapter spinnerAdapter;
-     Spinner spinner;
+    Spinner spinner;
+    ArrayList<Kviz> kvizovi; //svi kvizovi
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +50,7 @@ public class DodajKvizAkt extends AppCompatActivity {
         kategorija = (Kategorija) intent.getSerializableExtra("kategorija");
         kategorije = (ArrayList<Kategorija>) intent.getSerializableExtra("kategorije");
         pitanja = (ArrayList<Pitanje>) intent.getSerializableExtra("pitanja");
+        kvizovi = (ArrayList<Kviz>) intent.getSerializableExtra("kvizovi");
         naziv = intent.getStringExtra("naziv");
         kviz = (Kviz) intent.getSerializableExtra("kviz");
         String svrha = intent.getStringExtra("svrha");
@@ -55,11 +58,12 @@ public class DodajKvizAkt extends AppCompatActivity {
         dodajPitanje.setNaziv("Dodaj Pitanje");
         if(pitanja.size() == 0 || !pitanja.get(pitanja.size() - 1).getNaziv().equalsIgnoreCase("Dodaj pitanje"))
             pitanja.add(dodajPitanje);
+        if(!kategorije.get(kategorije.size() - 1).getNaziv().equalsIgnoreCase("Dodaj kategoriju")) {
             Kategorija addKat = new Kategorija();
             addKat.setNaziv("Dodaj kategoriju");
             addKat.setId("addkviz");
             kategorije.add(addKat);
-            kategorije.remove(0);
+        }
 
 
         if(svrha.equals("izmjena")) dugme.setText("Izmijeni kviz");
@@ -107,6 +111,7 @@ public class DodajKvizAkt extends AppCompatActivity {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 if (position == kategorije.size() - 1) {
                     Intent intent = new Intent(DodajKvizAkt.this, DodajKategorijuAkt.class);
+                    intent.putExtra("kategorije", kategorije);
                     startActivityForResult(intent, SECOND_ACTIVITY_REQUEST_CODE1);
                 }
             }
@@ -128,7 +133,23 @@ public class DodajKvizAkt extends AppCompatActivity {
                 } else if(tmp.getNaziv().equals("Svi") || tmp.getNaziv().equalsIgnoreCase("Dodaj kategoriju")) {
                     Toast.makeText(DodajKvizAkt.this, "Odaberite drugu ili dodajte novu kategoriju.", Toast.LENGTH_LONG).show();
                     return;
+                } else if(imeKviza.getText().toString().equalsIgnoreCase("Dodaj kategoriju") || imeKviza.getText().toString().equalsIgnoreCase("Svi")) {
+                    imeKviza.setBackgroundColor(Color.RED);
+                    imeKviza.setHint("Odaberite drugo ime");
+                    return;
                 }
+                for(Kviz k : kvizovi) {
+                    if(k.getNaziv().equalsIgnoreCase(imeKviza.getText().toString())) {
+                        if(imeKviza.getText().toString().equalsIgnoreCase(kviz.getNaziv())) {
+
+                        } else {
+                            imeKviza.setBackgroundColor(Color.RED);
+                            imeKviza.setHint("Odaberite drugo ime");
+                            return;
+                        }
+                    }
+                }
+                imeKviza.setHint("");
                 imeKviza.setBackgroundColor(0x00000000);
                 kategorija = (Kategorija) spinner.getSelectedItem();
                 kviz = new Kviz(imeKviza.getText().toString(), pitanja, kategorija);
@@ -141,6 +162,15 @@ public class DodajKvizAkt extends AppCompatActivity {
             }
         });
     }
+
+    @Override
+    public void onBackPressed() {
+            Intent povratni = new Intent();
+            povratni.putExtra("dodaneKategorije", kategorije);
+            setResult(Activity.RESULT_OK, povratni);
+            finish();
+    }
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);

@@ -89,16 +89,17 @@ public class ListaAdapter extends BaseAdapter implements Filterable {
             holder.textImeKviza.setText("Nema podataka");
 
         }
-        else
-        {
+        else {
             trenutniKviz = null;
-            trenutniKviz = (Kviz) data.get( position );
+            trenutniKviz = (Kviz) data.get(position);
 
-            holder.textImeKviza.setText( trenutniKviz.getNaziv() );
-            if(!trenutniKviz.getKategorija().getId().equals("addkviz"))
-                holder.image.setIcon(Integer.parseInt(trenutniKviz.getKategorija().getId()));
-            else
-                holder.image.setImageResource(res.getIdentifier("ba.unsa.etf.rma:drawable/" + trenutniKviz.getKategorija().getId(),null,null));
+            if (trenutniKviz != null) {
+                holder.textImeKviza.setText(trenutniKviz.getNaziv());
+                if (!trenutniKviz.getKategorija().getId().equals("addkviz"))
+                    holder.image.setIcon(Integer.parseInt(trenutniKviz.getKategorija().getId()));
+                else
+                    holder.image.setImageResource(res.getIdentifier("ba.unsa.etf.rma:drawable/" + trenutniKviz.getKategorija().getId(), null, null));
+            }
         }
         return vi;
     }

@@ -31,23 +31,11 @@ public class KvizoviAkt extends AppCompatActivity {
 
         GlavnaKlasa = this;
 ///////////////////////////////////////
-        Kviz testni = new Kviz();
-        Kategorija cat = new Kategorija();
-        cat.setNaziv("Science");
-        cat.setId("science");
-        testni.setNaziv("Testni");
-        testni.setKategorija(cat);
-        //kvizovi.add(testni);
-        ArrayList<String> odg = new ArrayList<>();
-        odg.add("da");
-        odg.add("ne");
-        Pitanje pitanje = new Pitanje("Prvo pitanje", "Da li ce raditi?", odg, "da");
-        Pitanje pitanje1 = new Pitanje("Drugo pitanje", "Da li ce raditi?", odg, "ne");
-        testni.getPitanja().add(pitanje);
-        testni.getPitanja().add(pitanje1);
+
 //////////////////////////////////////
 
-        dodajAddKvizNaKraj();
+        if(kvizovi.size() == 0 || !kvizovi.get(kvizovi.size() - 1).getNaziv().equalsIgnoreCase("dodaj kviz"))
+            dodajAddKvizNaKraj();
         dodajSviKategorijuUSpinner();
 
 
@@ -62,18 +50,23 @@ public class KvizoviAkt extends AppCompatActivity {
         SpinnerAdapter adapterSpinner = new SpinnerAdapter(GlavnaKlasa, kategorije );
         spinner.setAdapter(adapterSpinner);
 
+        //listener za listu kvizova, slanje podataka u aktivnost za dodavanja/izmjenu kviza
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if (position == kvizovi.size() - 1) { // ako je kliknuto na zadnji element tj dodavanje novog kviza
                     Intent intent = new Intent(KvizoviAkt.this, DodajKvizAkt.class);
+                    Kviz pomocni = new Kviz();
+                    pomocni.setNaziv("");
                     daLiJeIzmjena = false;
                     intent.putExtra("naziv", "");
                     intent.putExtra("pitanja", new ArrayList<Pitanje>());
                     intent.putExtra("kategorija", svi);
                     intent.putExtra("kategorije", kategorije);
                     intent.putExtra("svrha", "dodavanje");
+                    intent.putExtra("kviz", pomocni);
+                    intent.putExtra("kvizovi", kvizovi);
                     startActivityForResult(intent, SECOND_ACTIVITY_REQUEST_CODE);
                 } else {
                     Intent intent = new Intent(KvizoviAkt.this, DodajKvizAkt.class);
@@ -82,6 +75,7 @@ public class KvizoviAkt extends AppCompatActivity {
                     intent.putExtra("kategorija", kvizovi.get(position).getKategorija());
                     intent.putExtra("kategorije", kategorije);
                     intent.putExtra("kviz", kvizovi.get(position));
+                    intent.putExtra("kvizovi", kvizovi);
                     intent.putExtra("svrha", "izmjena");
                     pozicija = position;
                     daLiJeIzmjena = true;
@@ -109,6 +103,8 @@ public class KvizoviAkt extends AppCompatActivity {
         });
     }
 
+
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -118,16 +114,24 @@ public class KvizoviAkt extends AppCompatActivity {
                 // Get String data from Intent
                 Kviz kviz = (Kviz) data.getSerializableExtra("povratniKviz");
                 Kategorija kategorija = (Kategorija) data.getSerializableExtra("novaKategorija");
-                if(!daLiJeIzmjena)
+                ArrayList<Kategorija> kategorijee = (ArrayList<Kategorija>) data.getSerializableExtra("dodaneKategorije");
+                if(kategorija != null) {
+                    kategorije.add(kategorije.size(), kategorija);
+                } else if(kategorijee != null) {
+                    kategorije.clear();
+                    for(Kategorija k : kategorijee) {
+                        if(!k.getNaziv().equalsIgnoreCase("dodaj kategoriju")) kategorije.add(k);
+                    }
+                    daLiJeIzmjena = true;
+                }
+                if(!daLiJeIzmjena && kviz != null)
                     kvizovi.add(kvizovi.size() - 1, kviz);
-                else {
+                else if(pozicija != -1 && kviz != null){
                     kvizovi.get(pozicija).setNaziv(kviz.getNaziv());
                     kvizovi.get(pozicija).setKategorija(kviz.getKategorija());
                     kvizovi.get(pozicija).setPitanja(kviz.getPitanja());
                 }
-                if(kategorija != null) {
-                    kategorije.add(kategorije.size(), kategorija);
-                }
+
                 adapter.notifyDataSetChanged();
             }
         }

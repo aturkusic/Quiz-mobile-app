@@ -13,11 +13,14 @@ import android.widget.Toast;
 import com.maltaisn.icondialog.Icon;
 import com.maltaisn.icondialog.IconDialog;
 
+import java.util.ArrayList;
+
 public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.Callback {
 
     private Icon[] selectedIcons;
     EditText imeKategorije;
     EditText imeIkone;
+    ArrayList<Kategorija> kategorije;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -28,6 +31,7 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
         imeIkone = (EditText) findViewById(R.id.etIkona);
         Button dodajIkonuBtn = (Button) findViewById(R.id.btnDodajIkonu);
         Button dodajKategorijuBtn = (Button) findViewById(R.id.btnDodajKategoriju);
+        kategorije = (ArrayList<Kategorija>) getIntent().getSerializableExtra("kategorije");
 
         final IconDialog iconDialog = new IconDialog();
         imeIkone.setEnabled(false);
@@ -51,6 +55,7 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
                     imeIkone.setBackgroundColor(Color.RED);
                     return;
                 }
+//                if(kategorije.indexOf(imeKategorije.getText().toString() ==-1)
                 imeKategorije.setBackgroundColor(0x00000000);
                 imeIkone.setBackgroundColor(0x00000000);
                 Intent povratni = new Intent();
