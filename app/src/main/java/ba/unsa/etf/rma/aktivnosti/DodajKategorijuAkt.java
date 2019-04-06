@@ -1,4 +1,4 @@
-package ba.unsa.etf.rma;
+package ba.unsa.etf.rma.aktivnosti;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -8,12 +8,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import com.maltaisn.icondialog.Icon;
 import com.maltaisn.icondialog.IconDialog;
 
 import java.util.ArrayList;
+
+import ba.unsa.etf.rma.klase.Kategorija;
+import ba.unsa.etf.rma.R;
 
 public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.Callback {
 

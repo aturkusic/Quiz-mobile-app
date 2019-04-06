@@ -1,4 +1,4 @@
-package ba.unsa.etf.rma;
+package ba.unsa.etf.rma.adapteri;
 
 import android.app.Activity;
 import android.content.Context;
@@ -14,6 +14,10 @@ import android.widget.TextView;
 import com.maltaisn.icondialog.IconView;
 
 import java.util.ArrayList;
+
+import ba.unsa.etf.rma.R;
+import ba.unsa.etf.rma.klase.Kategorija;
+import ba.unsa.etf.rma.klase.Kviz;
 
 public class ListaAdapter extends BaseAdapter implements Filterable {
     private Activity activity;

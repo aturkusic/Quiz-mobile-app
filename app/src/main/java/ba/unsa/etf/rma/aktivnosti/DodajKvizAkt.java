@@ -1,4 +1,4 @@
-package ba.unsa.etf.rma;
+package ba.unsa.etf.rma.aktivnosti;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -6,7 +6,6 @@ import android.content.res.Resources;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.view.KeyEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -17,6 +16,12 @@ import android.widget.SpinnerAdapter;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+
+import ba.unsa.etf.rma.klase.Kategorija;
+import ba.unsa.etf.rma.klase.Kviz;
+import ba.unsa.etf.rma.adapteri.ListaPitanjaAdapter;
+import ba.unsa.etf.rma.klase.Pitanje;
+import ba.unsa.etf.rma.R;
 
 public class DodajKvizAkt extends AppCompatActivity {
     private static final int SECOND_ACTIVITY_REQUEST_CODE = 0;
@@ -76,11 +81,11 @@ public class DodajKvizAkt extends AppCompatActivity {
         listaPitanja.setAdapter( adapter );
         adapter1 = new ListaPitanjaAdapter(this, listaMogucih, resources );
         listaMogucihPitanja.setAdapter( adapter1 );
-        spinnerAdapter = new ba.unsa.etf.rma.SpinnerAdapter(this, kategorije);
+        spinnerAdapter = new ba.unsa.etf.rma.adapteri.SpinnerAdapter(this, kategorije);
         spinner.setAdapter(spinnerAdapter);
         imeKviza.setText(naziv);
 
-        spinner.setSelection(((ba.unsa.etf.rma.SpinnerAdapter) spinnerAdapter).getPozicija(kategorija));
+        spinner.setSelection(((ba.unsa.etf.rma.adapteri.SpinnerAdapter) spinnerAdapter).getPozicija(kategorija));
 
         listaPitanja.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override

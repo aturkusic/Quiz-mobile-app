@@ -1,4 +1,4 @@
-package ba.unsa.etf.rma;
+package ba.unsa.etf.rma.aktivnosti;
 
 import android.content.Intent;
 import android.content.res.Resources;
@@ -6,13 +6,17 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.Spinner;
-import android.widget.Toast;
 
 import java.util.ArrayList;
+
+import ba.unsa.etf.rma.klase.Kategorija;
+import ba.unsa.etf.rma.klase.Kviz;
+import ba.unsa.etf.rma.adapteri.ListaAdapter;
+import ba.unsa.etf.rma.klase.Pitanje;
+import ba.unsa.etf.rma.R;
+import ba.unsa.etf.rma.adapteri.SpinnerAdapter;
 
 public class KvizoviAkt extends AppCompatActivity {
     private static final int SECOND_ACTIVITY_REQUEST_CODE = 0;

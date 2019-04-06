@@ -1,26 +1,29 @@
-package ba.unsa.etf.rma;
+package ba.unsa.etf.rma.adapteri;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 
-public class ListaPitanjaAdapter extends BaseAdapter {
+import ba.unsa.etf.rma.R;
+
+public class ListaOdgovoriAdapter extends BaseAdapter {
     private Activity activity;
     private ArrayList data;
     private static LayoutInflater inflater = null;
     public Resources res;
-    Pitanje tempValues = null;
+    String tempValues = null;
+    private int pozicija = -1;
 
 
-    public ListaPitanjaAdapter(Activity a, ArrayList d, Resources resLocal) {
+    public ListaOdgovoriAdapter(Activity a, ArrayList d, Resources resLocal) {
         activity = a;
         data = d;
         res = resLocal;
@@ -44,9 +47,17 @@ public class ListaPitanjaAdapter extends BaseAdapter {
         return position;
     }
 
+    public int getPozicija() {
+        return pozicija;
+    }
+
+    public void setPozicija(int pozicija) {
+        this.pozicija = pozicija;
+    }
+
     private static class ViewHolder{
 
-        public TextView imePitanjaText;
+        public TextView odgovor;
 
     }
 
@@ -55,13 +66,12 @@ public class ListaPitanjaAdapter extends BaseAdapter {
 
         View vi = convertView;
         ViewHolder holder;
-
         if(convertView==null){
 
-            vi = inflater.inflate(R.layout.custom_lista_pitanje, null);
+            vi = inflater.inflate(R.layout.pitanje_odgovor_lista, null);
 
             holder = new ViewHolder();
-            holder.imePitanjaText = (TextView) vi.findViewById(R.id.lv_red_pitanje);
+            holder.odgovor = (TextView) vi.findViewById(R.id.odgovorUListi);
 
             vi.setTag( holder );
         }
@@ -70,18 +80,19 @@ public class ListaPitanjaAdapter extends BaseAdapter {
 
         if(data.size()<=0)
         {
-            holder.imePitanjaText.setText("Nema podataka");
-
+            holder.odgovor.setText("Nema podataka");
         }
         else
         {
             tempValues = null;
-            tempValues = (Pitanje) data.get( position );
+            tempValues = (String) data.get( position );
 
-            if(tempValues != null)
-                holder.imePitanjaText.setText( tempValues.getNaziv() );
+            holder.odgovor.setText( tempValues );
 
         }
+        holder.odgovor.setBackgroundColor(0x00000000);
+        if(position == pozicija)
+            holder.odgovor.setBackgroundColor(Color.GREEN);
         return vi;
     }
 }
