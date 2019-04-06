@@ -112,17 +112,17 @@ public class KvizoviAkt extends AppCompatActivity {
             if (resultCode == RESULT_OK) {
                 // Get String data from Intent
                 Kviz kviz = (Kviz) data.getSerializableExtra("povratniKviz");
-                Kategorija kategorija = (Kategorija) data.getSerializableExtra("novaKategorija");
                 ArrayList<Kategorija> kategorijee = (ArrayList<Kategorija>) data.getSerializableExtra("dodaneKategorije");
-                if(kategorija != null) {
-                    kategorije.add(kategorije.size(), kategorija);
-                } else if(kategorijee != null) {
+                String tip = data.getStringExtra("tip");
+                if(kategorijee != null) {
                     kategorije.clear();
                     for(Kategorija k : kategorijee) {
                         if(!k.getNaziv().equalsIgnoreCase("dodaj kategoriju")) kategorije.add(k);
                     }
-                    daLiJeIzmjena = true;
                 }
+                if(tip.equalsIgnoreCase("izmjena")) daLiJeIzmjena = true;
+                else daLiJeIzmjena = false;
+
                 if(!daLiJeIzmjena && kviz != null)
                     kvizovi.add(kvizovi.size() - 1, kviz);
                 else if(pozicija != -1 && kviz != null){

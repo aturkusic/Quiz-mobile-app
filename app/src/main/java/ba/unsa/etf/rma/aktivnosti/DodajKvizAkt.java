@@ -37,6 +37,7 @@ public class DodajKvizAkt extends AppCompatActivity {
     SpinnerAdapter spinnerAdapter;
     Spinner spinner;
     ArrayList<Kviz> kvizovi; //svi kvizovi
+    String svrha;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,7 +59,7 @@ public class DodajKvizAkt extends AppCompatActivity {
         kvizovi = (ArrayList<Kviz>) intent.getSerializableExtra("kvizovi");
         naziv = intent.getStringExtra("naziv");
         kviz = (Kviz) intent.getSerializableExtra("kviz");
-        String svrha = intent.getStringExtra("svrha");
+        svrha = intent.getStringExtra("svrha");
         Pitanje dodajPitanje = new Pitanje();
         dodajPitanje.setNaziv("Dodaj Pitanje");
         if(pitanja.size() == 0 || !pitanja.get(pitanja.size() - 1).getNaziv().equalsIgnoreCase("Dodaj pitanje"))
@@ -161,7 +162,8 @@ public class DodajKvizAkt extends AppCompatActivity {
                 kviz = new Kviz(imeKviza.getText().toString(), pitanja, kategorija);
                 Intent povratni = new Intent();
                 povratni.putExtra("povratniKviz", kviz);
-                povratni.putExtra("novaKategorija", dodanaKategorija);
+                povratni.putExtra("dodaneKategorije", kategorije);
+                povratni.putExtra("tip", svrha);
                 setResult(Activity.RESULT_OK, povratni);
                 finish();
 
@@ -173,6 +175,7 @@ public class DodajKvizAkt extends AppCompatActivity {
     public void onBackPressed() {
             Intent povratni = new Intent();
             povratni.putExtra("dodaneKategorije", kategorije);
+            povratni.putExtra("tip", svrha);
             setResult(Activity.RESULT_OK, povratni);
             finish();
     }
