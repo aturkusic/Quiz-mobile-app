@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="wrap_content">
 
     <Spinner
         android:id="@+id/spKategorije"
@@ -41,10 +46,16 @@
 
     <ListView
         android:id="@+id/lvDodanaPitanja"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_width="406dp"
+        android:layout_height="198dp"
         android:layout_below="@id/textView1"
-        android:layout_margin="5dp"/>
+        android:nestedScrollingEnabled="true"
+        android:layout_marginStart="5dp"
+        android:layout_marginLeft="5dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginEnd="5dp"
+        android:layout_marginRight="5dp"
+        android:layout_marginBottom="5dp" />
 
     <TextView
         android:id="@+id/textView2"
@@ -60,10 +71,16 @@
 
     <ListView
         android:id="@+id/lvMogucaPitanja"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_height="181dp"
         android:layout_below="@id/textView2"
-        android:layout_margin="5dp" />
+        android:layout_marginStart="5dp"
+        android:nestedScrollingEnabled="true"
+        android:layout_marginLeft="5dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginEnd="5dp"
+        android:layout_marginRight="5dp"
+        android:layout_marginBottom="5dp" />
 
     <Button
         android:id="@+id/btnDodajKviz"
@@ -83,3 +100,4 @@
         android:background="@drawable/button_border"
         />
 </RelativeLayout>
+</ScrollView>

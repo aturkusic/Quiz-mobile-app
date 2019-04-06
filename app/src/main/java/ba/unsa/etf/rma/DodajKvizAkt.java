@@ -92,6 +92,7 @@ public class DodajKvizAkt extends AppCompatActivity {
                 } else {
                     Intent intent = new Intent(DodajKvizAkt.this, DodajPitanjeAkt.class);
                     intent.putExtra("pitanje", pitanja.get(position));
+                    intent.putExtra("pitanja", pitanja);
                     startActivityForResult(intent, SECOND_ACTIVITY_REQUEST_CODE);
                 }
             }

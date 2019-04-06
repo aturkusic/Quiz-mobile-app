@@ -55,7 +55,14 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
                     imeIkone.setBackgroundColor(Color.RED);
                     return;
                 }
-//                if(kategorije.indexOf(imeKategorije.getText().toString() ==-1)
+                for(Kategorija k : kategorije) {
+                    if(k.getNaziv().equalsIgnoreCase(imeKategorije.getText().toString())) {
+                        imeKategorije.setBackgroundColor(Color.RED);
+                        imeKategorije.setHint("Odaberite drugo ime");
+                        return;
+                    }
+                }
+                imeKategorije.setHint("");
                 imeKategorije.setBackgroundColor(0x00000000);
                 imeIkone.setBackgroundColor(0x00000000);
                 Intent povratni = new Intent();

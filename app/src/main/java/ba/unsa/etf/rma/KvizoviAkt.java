@@ -30,9 +30,6 @@ public class KvizoviAkt extends AppCompatActivity {
         setContentView(R.layout.kvizovi_akt);
 
         GlavnaKlasa = this;
-///////////////////////////////////////
-
-//////////////////////////////////////
 
         if(kvizovi.size() == 0 || !kvizovi.get(kvizovi.size() - 1).getNaziv().equalsIgnoreCase("dodaj kviz"))
             dodajAddKvizNaKraj();
@@ -102,8 +99,6 @@ public class KvizoviAkt extends AppCompatActivity {
             }
         });
     }
-
-
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {

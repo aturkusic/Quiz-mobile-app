@@ -35,12 +35,11 @@ public class DodajPitanjeAkt extends AppCompatActivity {
         final ListView listaOdgovora = (ListView) findViewById(R.id.lvOdgovori);
 
         final Pitanje pitanje = (Pitanje)getIntent().getSerializableExtra("pitanje");
+        final ArrayList<Pitanje> pitanja = (ArrayList<Pitanje>)getIntent().getSerializableExtra("pitanja");
         final ArrayList<String> odgovori = new ArrayList<>();
 
         Resources res = getResources();
-
         final ListaOdgovoriAdapter adapter = new ListaOdgovoriAdapter(this, odgovori, res);
-
         listaOdgovora.setAdapter(adapter);
 
 
@@ -68,8 +67,13 @@ public class DodajPitanjeAkt extends AppCompatActivity {
                 if(odgovor.getText().toString().equals("")) {
                     odgovor.setBackgroundColor(Color.RED);
                     odgovor.setHint("Ne smije biti prazno");
+                } else if(!(odgovori.indexOf(odgovor.getText().toString())== -1)) {
+                    odgovor.setBackgroundColor(Color.RED);
+                    odgovor.setHint("Odgovor vec postoji");
+                    return;
                 } else {
                     odgovor.setBackgroundColor(0x00000000);
+                    odgovor.setHint("");
                     odgovori.add(odgovor.getText().toString());
                     adapter.notifyDataSetChanged();
                     pitanje.getOdgovori().add(odgovor.getText().toString());
@@ -84,19 +88,22 @@ public class DodajPitanjeAkt extends AppCompatActivity {
                 if(!pitanje.getTacanOdgovor().equals("")) {
                     Toast.makeText(DodajPitanjeAkt.this, "Ne mogu dva tacna, obrisite stari.", Toast.LENGTH_LONG).show();
                     return;
-                }
-                if(odgovor.getText().toString().equals("")) {
+                } else if(odgovor.getText().toString().equals("")) {
                     odgovor.setBackgroundColor(Color.RED);
                     odgovor.setHint("Ne smije biti prazno");
-                } else {
-                    odgovor.setBackgroundColor(0x00000000);
-                    odgovori.add(odgovor.getText().toString());
-                    pozicijaTacnog = odgovori.size() - 1;
-                    adapter.setPozicija(pozicijaTacnog);
-                    adapter.notifyDataSetChanged();
-                    pitanje.getOdgovori().add(odgovor.getText().toString());
-                    pitanje.setTacanOdgovor(odgovor.getText().toString());
+                    return;
+                } else if(!(odgovori.indexOf(odgovor.getText().toString()) == -1)) { //isti odgovor vec postoji na to pitanje
+                    odgovor.setBackgroundColor(Color.RED);
+                    odgovor.setHint("Odgovor vec postoji");
+                    return;
                 }
+                odgovor.setBackgroundColor(0x00000000);
+                odgovori.add(odgovor.getText().toString());
+                pozicijaTacnog = odgovori.size() - 1;
+                adapter.setPozicija(pozicijaTacnog);
+                adapter.notifyDataSetChanged();
+                pitanje.getOdgovori().add(odgovor.getText().toString());
+                pitanje.setTacanOdgovor(odgovor.getText().toString());
                 odgovor.setText("");
             }
         });
@@ -111,10 +118,19 @@ public class DodajPitanjeAkt extends AppCompatActivity {
                 } else if(pitanje.getTacanOdgovor().equals("")) {
                     Toast.makeText(DodajPitanjeAkt.this, "Morate unijeti tacan odgovor", Toast.LENGTH_LONG).show();
                     return;
-                } else {
-                    pitanje.setNaziv(imePitanja.getText().toString());
-                    pitanje.setTekstPitanja(imePitanja.getText().toString());
                 }
+                for(Pitanje p : pitanja) {
+                    if(p.getNaziv().equalsIgnoreCase(imePitanja.getText().toString())) {
+                        imePitanja.setBackgroundColor(Color.RED);
+                        imePitanja.setHint("Odaberite drugo ime");
+                        return;
+                    }
+                }
+                imePitanja.setBackgroundColor(0x00000000);
+                imePitanja.setHint("");
+                pitanje.setNaziv(imePitanja.getText().toString());
+                pitanje.setTekstPitanja(imePitanja.getText().toString());
+
                 Intent povratni = new Intent();
                 povratni.putExtra("povratnoPitanje", pitanje);
                 setResult(Activity.RESULT_OK, povratni);
