@@ -46,7 +46,7 @@ public class ListaAdapter extends BaseAdapter implements Filterable {
 
     @Override
     public Object getItem(int position) {
-        return position;
+        return data.get(position);
     }
 
     @Override
@@ -128,7 +128,7 @@ public class ListaAdapter extends BaseAdapter implements Filterable {
                 ArrayList<Kviz> filters = new ArrayList<>();
 
                 for (int i = 0; i < dataCopy.size(); i++) {
-                    if (dataCopy.get(i).getKategorijaNaziv().contains(constraint) || dataCopy.get(i).getKategorijaNaziv().equals("dodaj kviz")) {
+                    if (dataCopy.get(i).getKategorijaNaziv().equalsIgnoreCase(constraint.toString()) || dataCopy.get(i).getKategorijaNaziv().equals("dodaj kviz")) {
                         Kviz kviz = new Kviz(dataCopy.get(i).getNaziv(), dataCopy.get(i).getPitanja(), dataCopy.get(i).getKategorija());
                         filters.add(kviz);
                     }

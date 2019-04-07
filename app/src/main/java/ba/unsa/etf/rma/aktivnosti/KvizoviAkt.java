@@ -27,6 +27,7 @@ public class KvizoviAkt extends AppCompatActivity {
     private ListaAdapter adapter;
     private boolean daLiJeIzmjena = false;
     private int pozicija = -1;
+    Spinner spinner;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,7 +44,7 @@ public class KvizoviAkt extends AppCompatActivity {
         Resources res = getResources();
 
         final ListView list  = ( ListView )findViewById( R.id.lvKvizovi );
-        final Spinner spinner = ( Spinner )findViewById(R.id.spPostojeceKategorije);
+        spinner = ( Spinner )findViewById(R.id.spPostojeceKategorije);
 
         adapter = new ListaAdapter(GlavnaKlasa, kvizovi, res);
         list.setAdapter(adapter);
@@ -56,8 +57,10 @@ public class KvizoviAkt extends AppCompatActivity {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent = new Intent(KvizoviAkt.this, DodajKvizAkt.class);
+                Kviz kviz = (Kviz) parent.getItemAtPosition(position);
+                position = pronadjiPozicijuUListi(kviz.getNaziv());
                 if (position == kvizovi.size() - 1) { // ako je kliknuto na zadnji element tj dodavanje novog kviza
-                    Intent intent = new Intent(KvizoviAkt.this, DodajKvizAkt.class);
                     Kviz pomocni = new Kviz();
                     pomocni.setNaziv("");
                     daLiJeIzmjena = false;
@@ -70,7 +73,6 @@ public class KvizoviAkt extends AppCompatActivity {
                     intent.putExtra("kvizovi", kvizovi);
                     startActivityForResult(intent, SECOND_ACTIVITY_REQUEST_CODE);
                 } else {
-                    Intent intent = new Intent(KvizoviAkt.this, DodajKvizAkt.class);
                     intent.putExtra("naziv", kvizovi.get(position).getNaziv());
                     intent.putExtra("pitanja", kvizovi.get(position).getPitanja());
                     intent.putExtra("kategorija", kvizovi.get(position).getKategorija());
@@ -104,9 +106,20 @@ public class KvizoviAkt extends AppCompatActivity {
         });
     }
 
+    private int pronadjiPozicijuUListi(String imeKviza) {
+        int i = 0;
+        for(Kviz k : kvizovi) {
+            if (k.getNaziv().equals(imeKviza))
+                return i;
+            i++;
+        }
+         return  -1;
+    }
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        spinner.setSelection(0);
         // Check that it is the SecondActivity with an OK result
         if (requestCode == SECOND_ACTIVITY_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
@@ -130,7 +143,6 @@ public class KvizoviAkt extends AppCompatActivity {
                     kvizovi.get(pozicija).setKategorija(kviz.getKategorija());
                     kvizovi.get(pozicija).setPitanja(kviz.getPitanja());
                 }
-
                 adapter.notifyDataSetChanged();
             }
         }
