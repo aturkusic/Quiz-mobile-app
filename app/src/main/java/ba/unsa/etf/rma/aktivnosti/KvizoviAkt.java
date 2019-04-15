@@ -104,7 +104,7 @@ public class KvizoviAkt extends AppCompatActivity {
 
             }
         });
-    }
+    } //
 
     private int pronadjiPozicijuUListi(String imeKviza) {
         int i = 0;
