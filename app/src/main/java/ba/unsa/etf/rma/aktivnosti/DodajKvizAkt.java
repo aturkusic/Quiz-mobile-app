@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -15,6 +16,11 @@ import android.widget.Spinner;
 import android.widget.SpinnerAdapter;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 import ba.unsa.etf.rma.klase.Kategorija;
@@ -39,17 +45,25 @@ public class DodajKvizAkt extends AppCompatActivity {
     ArrayList<Kviz> kvizovi; //svi kvizovi
     String svrha;
 
+    ListView listaPitanja;
+    ListView listaMogucihPitanja;
+    EditText imeKviza;
+    Button dugme;
+    Button importujBtn;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.dodaj_kviz);
 
-        final ListView listaPitanja = (ListView) findViewById(R.id.lvDodanaPitanja);
-        ListView listaMogucihPitanja = (ListView) findViewById(R.id.lvMogucaPitanja);
-        final EditText imeKviza = (EditText) findViewById(R.id.etNaziv);
+        listaPitanja = (ListView) findViewById(R.id.lvDodanaPitanja);
+        listaMogucihPitanja = (ListView) findViewById(R.id.lvMogucaPitanja);
+        imeKviza = (EditText) findViewById(R.id.etNaziv);
         spinner = (Spinner) findViewById(R.id.spKategorije);
-        Button dugme = (Button) findViewById(R.id.btnDodajKviz);
+        dugme = (Button) findViewById(R.id.btnDodajKviz);
+        importujBtn = (Button) findViewById(R.id.btnImportKviz);
+
 
         //dobavljanje podataka putem intenta i postavljanje default vrijednosti kao eleent liste za dodavanje pitanja
         Intent intent = getIntent();
@@ -169,6 +183,25 @@ public class DodajKvizAkt extends AppCompatActivity {
 
             }
         });
+
+        importujBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                performFileSearch();
+            }
+        });
+    }
+    private static final int READ_REQUEST_CODE = 42;
+
+    public void performFileSearch() {
+
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+
+        intent.setType("text/*");
+
+        startActivityForResult(intent, READ_REQUEST_CODE);
     }
 
     @Override
@@ -196,6 +229,45 @@ public class DodajKvizAkt extends AppCompatActivity {
                 Kategorija kategorija = (Kategorija) data.getSerializableExtra("povratnaKategorija");
                 dodanaKategorija = kategorija;
                 kategorije.add(kategorije.size() - 1, kategorija);
+            }
+        } else if(requestCode == READ_REQUEST_CODE) {//dodavanje kviza iz txt datoteke
+            Uri uri = null;
+            if (data != null) {
+                uri = data.getData();
+                try {
+                    InputStream is = getContentResolver().openInputStream(uri);
+                    String str = "";
+                    StringBuffer buf = new StringBuffer();
+                    try {
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+                        if (is != null) {
+                            int i = 0;
+                            while ((str = reader.readLine()) != null) {
+                                String[] niz = str.split(",");
+                                if(i == 0) {
+                                    imeKviza.setText(niz[0]);
+                                    Kategorija kat = new Kategorija(niz[1], "13");
+                                    kategorije.add(kategorije.size() - 1, kat);
+                                    dodanaKategorija = kat;
+                                } else {
+                                    Pitanje pitanje = new Pitanje();
+                                    pitanje.setNaziv(niz[0]);
+                                    pitanje.setTekstPitanja(niz[0]);
+                                    for(int j = 3; j < 3 + Integer.parseInt(niz[1]); j++) pitanje.getOdgovori().add(niz[i]);
+                                    pitanje.setTacanOdgovor(pitanje.getOdgovori().get(Integer.parseInt(niz[2])));
+                                    pitanja.add(pitanja.size() - 1, pitanje);
+                                    adapter.notifyDataSetChanged();
+                                }
+                                i++;
+                            }
+                        }
+                    } finally {
+                        try { is.close();
+                        } catch (Throwable ignore) {}
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }

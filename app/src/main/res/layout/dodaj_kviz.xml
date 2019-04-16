@@ -6,7 +6,6 @@
     android:fillViewport="true">
 
 <RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
@@ -86,7 +85,7 @@
         android:id="@+id/btnDodajKviz"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/lvMogucaPitanja"
+        android:layout_below="@id/btnImportKviz"
         android:layout_centerHorizontal="true"
         android:layout_margin="10dp"
         android:layout_marginStart="10dp"
@@ -99,5 +98,14 @@
         android:textSize="20sp"
         android:background="@drawable/button_border"
         />
+
+    <Button
+        android:id="@+id/btnImportKviz"
+        android:layout_below="@+id/lvMogucaPitanja"
+        android:layout_centerHorizontal="true"
+        android:layout_margin="5dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Importuj Kviz" />
 </RelativeLayout>
 </ScrollView>
