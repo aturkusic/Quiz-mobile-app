@@ -58,4 +58,10 @@ public class Pitanje implements Serializable {
         Collections.shuffle(izmjesano);
         return izmjesano;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        Pitanje pitanje = (Pitanje) o;
+        return naziv.equalsIgnoreCase(pitanje.naziv);
+    }
 }

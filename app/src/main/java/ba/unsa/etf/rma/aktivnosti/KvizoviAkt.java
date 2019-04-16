@@ -138,7 +138,7 @@ public class KvizoviAkt extends AppCompatActivity {
 
                 if(!daLiJeIzmjena && kviz != null)
                     kvizovi.add(kvizovi.size() - 1, kviz);
-                else if(pozicija != -1 && kviz != null){
+                else if(pozicija != -1 && kviz != null) {
                     kvizovi.get(pozicija).setNaziv(kviz.getNaziv());
                     kvizovi.get(pozicija).setKategorija(kviz.getKategorija());
                     kvizovi.get(pozicija).setPitanja(kviz.getPitanja());

@@ -29,4 +29,10 @@ public class Kategorija implements Serializable {
     public void setId(String id) {
         this.id = id;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        Kategorija kat = (Kategorija) o;
+        return naziv.equalsIgnoreCase(kat.naziv);
+    }
 }
