@@ -225,6 +225,7 @@ public class DodajKvizAkt extends AppCompatActivity {
                 Kategorija kategorija = (Kategorija) data.getSerializableExtra("povratnaKategorija");
                 dodanaKategorija = kategorija;
                 kategorije.add(kategorije.size() - 1, kategorija);
+                spinner.setSelection(kategorije.size() - 2);
             }
         } else if(requestCode == READ_REQUEST_CODE) {//dodavanje kviza iz txt datoteke
             Uri uri = null;
@@ -288,6 +289,7 @@ public class DodajKvizAkt extends AppCompatActivity {
             BufferedReader reader = new BufferedReader(new InputStreamReader(is));
             if (is != null) {
                 int i = 0;
+                ArrayList<Pitanje> pitanja = new ArrayList<>();
                 while ((str = reader.readLine()) != null) {
                     if(str.equals("")) continue;
                     String[] niz = str.split(",");
@@ -302,9 +304,8 @@ public class DodajKvizAkt extends AppCompatActivity {
                         else if(Integer.parseInt(niz[2]) < 0 || Integer.parseInt(niz[2]) >  niz.length - 4) { dialogAkcija("Kviz kojeg importujete ima neispravan index tacnog odgovora!"); return false; }
                         Pitanje pitanje = new Pitanje();
                         pitanje.setNaziv(niz[0]);
-                        ArrayList<Pitanje> pitanja = new ArrayList<>();
-                        pitanja.add(pitanje);
                         if(pitanja.contains(pitanje)) { dialogAkcija("Kviz kojeg importujete ima vise istih pitanja!"); return false; }
+                        pitanja.add(pitanje);
                         for(int j = 3; j < 3 + Integer.parseInt(niz[1]); j++) {
                             if(pitanje.getOdgovori().contains(niz[j]))  { dialogAkcija("Kviz kojeg importujete ima vise istih odgovora!"); return false; }
                             pitanje.getOdgovori().add(niz[j]);
