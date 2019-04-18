@@ -257,7 +257,7 @@ public class DodajKvizAkt extends AppCompatActivity {
                                     pitanje.setNaziv(niz[0]);
                                     pitanje.setTekstPitanja(niz[0]);
                                     for(int j = 3; j < 3 + Integer.parseInt(niz[1]); j++) {
-                                        pitanje.getOdgovori().add(niz[i]);
+                                        pitanje.getOdgovori().add(niz[j]);
                                     }
                                     pitanje.setTacanOdgovor(pitanje.getOdgovori().get(Integer.parseInt(niz[2])));
                                     pitanja.add(pitanja.size() - 1, pitanje);

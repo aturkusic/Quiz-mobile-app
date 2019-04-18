@@ -12,32 +12,17 @@ import android.widget.TextView;
 import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.fragmenti.InformacijeFrag;
 import ba.unsa.etf.rma.fragmenti.PitanjeFrag;
+import ba.unsa.etf.rma.klase.Kviz;
 import ba.unsa.etf.rma.klase.Pitanje;
 
 public class IgrajKvizAkt extends AppCompatActivity {
-
-    private TextView textPitanja;
-    private TextView nazivKviza;
-    private TextView brojTacnih;
-    private TextView brojPreostalih;
-    private TextView postotakTacnih;
-    private ListView listaOdgovora;
-    private Button zavrsiKvizBtn;
-
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.fragmenti_kviz);
 
-        textPitanja = (TextView) findViewById(R.id.tekstPitanja);
-        nazivKviza = (TextView) findViewById(R.id.infNazivKviza);
-        brojTacnih = (TextView) findViewById(R.id.infBrojTacnihPitanja);
-        brojPreostalih = (TextView) findViewById(R.id.infBrojPreostalihPitanja);
-        postotakTacnih = (TextView) findViewById(R.id.infProcenatTacni);
-        listaOdgovora = (ListView) findViewById(R.id.odgovoriPitanja);
-        zavrsiKvizBtn = (Button) findViewById(R.id.btnKraj);
-
+        Kviz kviz = (Kviz)getIntent().getSerializableExtra("kviz");
 
         FragmentManager fm = getFragmentManager();
         FrameLayout ldetalji = (FrameLayout)findViewById(R.id.pitanjePlace);
@@ -49,18 +34,11 @@ public class IgrajKvizAkt extends AppCompatActivity {
             if(pitanjeFrag == null) {
 
                 pitanjeFrag = new PitanjeFrag();
+                Bundle argumenti=new Bundle();
+                argumenti.putSerializable("kviz", kviz);
+                pitanjeFrag.setArguments(argumenti);
                 fm.beginTransaction().replace(R.id.pitanjePlace, pitanjeFrag).commit();
             }
-        }
-
-        InformacijeFrag informacijeFrag = (InformacijeFrag)fm.findFragmentById(R.id.informacijePlace);
-
-        if(informacijeFrag == null){
-
-            informacijeFrag = new InformacijeFrag();
-            fm.beginTransaction().replace(R.id.informacijePlace, informacijeFrag).commit();
-        }else{
-            fm.popBackStack(null,FragmentManager.POP_BACK_STACK_INCLUSIVE);
         }
 
     }

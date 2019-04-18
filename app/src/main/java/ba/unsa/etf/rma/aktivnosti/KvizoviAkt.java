@@ -61,6 +61,7 @@ public class KvizoviAkt extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(KvizoviAkt.this, IgrajKvizAkt.class);
+                intent.putExtra("kviz", kvizovi.get(position));
                 if(!(position == kvizovi.size() - 1))
                     startActivity(intent);
             }
