@@ -10,4 +10,9 @@
     <string name="odgovori">Odgovori</string>
     <string name="dodaj">Dodaj</string>
     <string name="dodaj_tacan">Dodaj tacan</string>
+    <string name="naziv_kviza">Naziv kviza:</string>
+    <string name="broj_tacnih_odgovora">Broj tacnih odgovora:</string>
+    <string name="preostalo_pitanja">Preostalo pitanja:</string>
+    <string name="procenat_tacnih_odgovora">Procenat tacnih odgovora:</string>
+    <string name="zavrsi_kviz">zavrsi kviz</string>
 </resources>

@@ -1,5 +1,8 @@
 package ba.unsa.etf.rma.aktivnosti;
 
+
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.support.v7.app.AppCompatActivity;
@@ -57,6 +60,15 @@ public class KvizoviAkt extends AppCompatActivity {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent = new Intent(KvizoviAkt.this, IgrajKvizAkt.class);
+                if(!(position == kvizovi.size() - 1))
+                    startActivity(intent);
+            }
+        });
+
+        list.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(KvizoviAkt.this, DodajKvizAkt.class);
                 Kviz kviz = (Kviz) parent.getItemAtPosition(position);
                 position = pronadjiPozicijuUListi(kviz.getNaziv());
@@ -84,6 +96,7 @@ public class KvizoviAkt extends AppCompatActivity {
                     daLiJeIzmjena = true;
                     startActivityForResult(intent, SECOND_ACTIVITY_REQUEST_CODE);
                 }
+                return true;
             }
         });
 
