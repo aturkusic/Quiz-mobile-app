@@ -15,7 +15,7 @@ import ba.unsa.etf.rma.fragmenti.PitanjeFrag;
 import ba.unsa.etf.rma.klase.Kviz;
 import ba.unsa.etf.rma.klase.Pitanje;
 
-public class IgrajKvizAkt extends AppCompatActivity {
+public class IgrajKvizAkt extends AppCompatActivity implements PitanjeFrag.PitanjeFragListener {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -25,14 +25,13 @@ public class IgrajKvizAkt extends AppCompatActivity {
         Kviz kviz = (Kviz)getIntent().getSerializableExtra("kviz");
 
         FragmentManager fm = getFragmentManager();
+
         FrameLayout ldetalji = (FrameLayout)findViewById(R.id.pitanjePlace);
 
         if(ldetalji!=null){
             PitanjeFrag pitanjeFrag;
             pitanjeFrag = (PitanjeFrag)fm.findFragmentById(R.id.pitanjePlace);
-
             if(pitanjeFrag == null) {
-
                 pitanjeFrag = new PitanjeFrag();
                 Bundle argumenti=new Bundle();
                 argumenti.putSerializable("kviz", kviz);
@@ -40,6 +39,23 @@ public class IgrajKvizAkt extends AppCompatActivity {
                 fm.beginTransaction().replace(R.id.pitanjePlace, pitanjeFrag).commit();
             }
         }
+
+        InformacijeFrag informacijeFrag = (InformacijeFrag)fm.findFragmentById(R.id.informacijePlace);
+
+        if(informacijeFrag == null){
+            informacijeFrag = new InformacijeFrag();
+            Bundle argumenti=new Bundle();
+            argumenti.putSerializable("kviz", kviz);
+            informacijeFrag.setArguments(argumenti);
+            fm.beginTransaction().replace(R.id.informacijePlace, informacijeFrag).commit();
+        } else {
+            fm.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        }
+
+    }
+
+    @Override
+    public void onInputASent(CharSequence input) {
 
     }
 }

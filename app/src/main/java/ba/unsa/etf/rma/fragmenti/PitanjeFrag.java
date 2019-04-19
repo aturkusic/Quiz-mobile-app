@@ -1,29 +1,46 @@
 package ba.unsa.etf.rma.fragmenti;
 
-import android.app.FragmentManager;
+import android.content.Context;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.app.Fragment;
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 import ba.unsa.etf.rma.R;
+import ba.unsa.etf.rma.adapteri.ListaOdgovoriAdapter;
+import ba.unsa.etf.rma.adapteri.ListaOdgovoriFragAdapter;
 import ba.unsa.etf.rma.klase.Kviz;
+import ba.unsa.etf.rma.klase.Pitanje;
 
 public class PitanjeFrag extends Fragment {
+    private PitanjeFragListener listener;
     private Kviz kviz = new Kviz();
     private TextView textPitanja;
     private ListView listaOdgovora;
-    private ArrayAdapter<String> adapter;
+    private ListaOdgovoriFragAdapter adapter;
+    private ArrayList<String> odgovori;
+    private ArrayList<Pitanje> pitanja;
+    private Pitanje pitanje;
+    int indexPitanja = 0;
     @Override
     public View onCreateView(
             LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_pitanje, container, false);
+    }
+
+    public interface PitanjeFragListener {
+        void onInputASent(CharSequence input);
     }
 
     @Override
@@ -33,26 +50,66 @@ public class PitanjeFrag extends Fragment {
             kviz = (Kviz)getArguments().getSerializable("kviz");
             textPitanja = (TextView) getView().findViewById(R.id.tekstPitanja);
             listaOdgovora = (ListView) getView().findViewById(R.id.odgovoriPitanja);
-            ArrayList<String> odgovori = kviz.getPitanja().get(0).getOdgovori();
+            pitanja = new ArrayList<>(kviz.getPitanja());
+            pitanja.remove(pitanja.size() - 1);
+            Collections.shuffle(pitanja);
+            pitanje = pitanja.get(indexPitanja);
+            odgovori = pitanje.getOdgovori();
+            textPitanja.setText(pitanje.getNaziv());
 
-            textPitanja.setText(kviz.getNaziv());
-
-            adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, odgovori);
+            Resources res = getResources();
+            adapter = new ListaOdgovoriFragAdapter(getActivity(), odgovori, res);
             listaOdgovora.setAdapter(adapter);
 
-            FragmentManager fm = getFragmentManager();
-            InformacijeFrag informacijeFrag = (InformacijeFrag)fm.findFragmentById(R.id.informacijePlace);
 
-            if(informacijeFrag == null){
-                informacijeFrag = new InformacijeFrag();
-                Bundle argumenti=new Bundle();
-                argumenti.putSerializable("kviz", kviz);
-                informacijeFrag.setArguments(argumenti);
-                fm.beginTransaction().replace(R.id.informacijePlace, informacijeFrag).commit();
-            } else {
-                fm.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-            }
+            listaOdgovora.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    int pozicijaTacnog = pitanje.getOdgovori().indexOf(pitanje.getTacanOdgovor());
+                    adapter.setPozicijaKliknutog(position);
+                    adapter.setPozicijaTacnog(pozicijaTacnog);
+                    adapter.notifyDataSetChanged();
+                    Handler handler = new Handler();
+                    handler.postDelayed(new Runnable() {
+                        public void run() {
+                            if(indexPitanja != pitanja.size() - 1) {
+                                pitanje = pitanja.get(++indexPitanja);
+                                odgovori.clear();
+                                odgovori.addAll(pitanja.get(indexPitanja).getOdgovori());
+                                textPitanja.setText(pitanje.getNaziv());
+                            } else {
+                                textPitanja.setText("“Kviz je završen!");
+                                odgovori.clear();
+                            }
+                            adapter.setPozicijaKliknutog(-1);
+                            adapter.setPozicijaTacnog(-1);
+                            adapter.notifyDataSetChanged();
+                        }
+                    }, 2000);
+
+                }
+            });
 
         }
+    }
+
+    public void updateEditText(CharSequence newText) {
+
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+//        if (context instanceof InformacijeFrag.InformacijeFragListener) {
+//            listener = (PitanjeFragListener) context;
+//        } else {
+//            throw new RuntimeException(context.toString() + " must implement PitanjeFragListener");
+//        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        listener = null;
     }
 }

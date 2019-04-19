@@ -1,5 +1,6 @@
 package ba.unsa.etf.rma.fragmenti;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.view.LayoutInflater;
@@ -12,11 +13,16 @@ import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.klase.Kviz;
 
 public class InformacijeFrag extends Fragment {
+    InformacijeFragListener listener;
     private TextView nazivKviza;
     private TextView brojTacnih;
     private TextView brojPreostalih;
     private TextView postotakTacnih;
     private Button zavrsiKvizBtn;
+
+    public interface InformacijeFragListener {
+        void onInputASent(CharSequence input);
+    }
 
     @Override
     public View onCreateView(
@@ -36,13 +42,29 @@ public class InformacijeFrag extends Fragment {
             postotakTacnih = (TextView)getView().findViewById(R.id.infProcenatTacni);
             zavrsiKvizBtn = (Button) getView().findViewById(R.id.btnKraj);
 
-            nazivKviza.setText(kviz.getNaziv());
-            //brojPreostalih.setText(kviz.getPitanja().size() - 1);
-            brojTacnih.setText("0");
-            postotakTacnih.setText("0.0");
 
 
         }
+    }
+
+    public void updateEditText(CharSequence newText) {
+
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+//        if (context instanceof InformacijeFragListener) {
+//            listener = (InformacijeFragListener) context;
+//        } else {
+//            throw new RuntimeException(context.toString() + " must implement PitanjeFragListener");
+//        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        listener = null;
     }
 
 }
