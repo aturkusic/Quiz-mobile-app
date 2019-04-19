@@ -15,8 +15,10 @@ import ba.unsa.etf.rma.fragmenti.PitanjeFrag;
 import ba.unsa.etf.rma.klase.Kviz;
 import ba.unsa.etf.rma.klase.Pitanje;
 
-public class IgrajKvizAkt extends AppCompatActivity implements PitanjeFrag.PitanjeFragListener {
+public class IgrajKvizAkt extends AppCompatActivity implements PitanjeFrag.PitanjeFragListener, InformacijeFrag.InformacijeFragListener {
 
+    private PitanjeFrag pitanjeFrag;
+    private InformacijeFrag informacijeFrag;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -29,7 +31,6 @@ public class IgrajKvizAkt extends AppCompatActivity implements PitanjeFrag.Pitan
         FrameLayout ldetalji = (FrameLayout)findViewById(R.id.pitanjePlace);
 
         if(ldetalji!=null){
-            PitanjeFrag pitanjeFrag;
             pitanjeFrag = (PitanjeFrag)fm.findFragmentById(R.id.pitanjePlace);
             if(pitanjeFrag == null) {
                 pitanjeFrag = new PitanjeFrag();
@@ -40,7 +41,7 @@ public class IgrajKvizAkt extends AppCompatActivity implements PitanjeFrag.Pitan
             }
         }
 
-        InformacijeFrag informacijeFrag = (InformacijeFrag)fm.findFragmentById(R.id.informacijePlace);
+        informacijeFrag = (InformacijeFrag)fm.findFragmentById(R.id.informacijePlace);
 
         if(informacijeFrag == null){
             informacijeFrag = new InformacijeFrag();
@@ -55,7 +56,12 @@ public class IgrajKvizAkt extends AppCompatActivity implements PitanjeFrag.Pitan
     }
 
     @Override
-    public void onInputASent(CharSequence input) {
+    public void onInputASent(CharSequence brojTacnih, CharSequence brojPreostalih, CharSequence postotakTacnih) {
+        informacijeFrag.updateEditText(brojTacnih, brojPreostalih, postotakTacnih);
+    }
+
+    @Override
+    public void onInputBSent(CharSequence brojTacnih, CharSequence brojPreostalih, CharSequence postotakTacnih) {
 
     }
 }

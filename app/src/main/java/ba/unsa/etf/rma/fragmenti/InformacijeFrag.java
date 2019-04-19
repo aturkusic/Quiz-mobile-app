@@ -13,7 +13,7 @@ import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.klase.Kviz;
 
 public class InformacijeFrag extends Fragment {
-    InformacijeFragListener listener;
+    private InformacijeFragListener listener;
     private TextView nazivKviza;
     private TextView brojTacnih;
     private TextView brojPreostalih;
@@ -21,7 +21,7 @@ public class InformacijeFrag extends Fragment {
     private Button zavrsiKvizBtn;
 
     public interface InformacijeFragListener {
-        void onInputASent(CharSequence input);
+        void onInputBSent(CharSequence brojTacnih, CharSequence brojPreostalih, CharSequence postotakTacnih);
     }
 
     @Override
@@ -33,32 +33,42 @@ public class InformacijeFrag extends Fragment {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
         if(getArguments().containsKey("kviz")) {
             Kviz kviz = (Kviz)getArguments().getSerializable("kviz");
             nazivKviza = (TextView) getView().findViewById(R.id.infNazivKviza);
             brojTacnih = (TextView) getView().findViewById(R.id.infBrojTacnihPitanja);
             brojPreostalih = (TextView) getView().findViewById(R.id.infBrojPreostalihPitanja);
-            postotakTacnih = (TextView)getView().findViewById(R.id.infProcenatTacni);
+            postotakTacnih = (TextView) getView().findViewById(R.id.infProcenatTacni);
             zavrsiKvizBtn = (Button) getView().findViewById(R.id.btnKraj);
 
-
-
+            nazivKviza.setText(kviz.getNaziv());
+            brojTacnih.setText("0");
+            brojPreostalih.setText(Integer.toString(kviz.getPitanja().size() - 2));
+            postotakTacnih.setText("0.0");
         }
+
+        zavrsiKvizBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getActivity().finish();
+            }
+        });
     }
 
-    public void updateEditText(CharSequence newText) {
-
+    public void updateEditText(CharSequence brojTacnihChar, CharSequence brojPreostalihChar, CharSequence postotakTacnihChar) {
+        brojTacnih.setText(brojTacnihChar);
+        brojPreostalih.setText(brojPreostalihChar);
+        postotakTacnih.setText(postotakTacnihChar);
     }
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-//        if (context instanceof InformacijeFragListener) {
-//            listener = (InformacijeFragListener) context;
-//        } else {
-//            throw new RuntimeException(context.toString() + " must implement PitanjeFragListener");
-//        }
+        if (context instanceof InformacijeFragListener) {
+            listener = (InformacijeFragListener) context;
+        } else {
+            throw new RuntimeException(context.toString() + " must implement InformacijeFragListener");
+        }
     }
 
     @Override

@@ -31,6 +31,8 @@ public class PitanjeFrag extends Fragment {
     private ListaOdgovoriFragAdapter adapter;
     private ArrayList<String> odgovori;
     private ArrayList<Pitanje> pitanja;
+    private Integer brojTacnih = 0;
+    private Double postotakTacnih = 0.0;
     private Pitanje pitanje;
     int indexPitanja = 0;
     @Override
@@ -40,7 +42,7 @@ public class PitanjeFrag extends Fragment {
     }
 
     public interface PitanjeFragListener {
-        void onInputASent(CharSequence input);
+        void onInputASent(CharSequence brojTacnihChar, CharSequence brojPreostalihChar, CharSequence postotakTacnihChar);
     }
 
     @Override
@@ -68,10 +70,17 @@ public class PitanjeFrag extends Fragment {
                     int pozicijaTacnog = pitanje.getOdgovori().indexOf(pitanje.getTacanOdgovor());
                     adapter.setPozicijaKliknutog(position);
                     adapter.setPozicijaTacnog(pozicijaTacnog);
+                    if(position == pozicijaTacnog) brojTacnih++;
                     adapter.notifyDataSetChanged();
                     Handler handler = new Handler();
                     handler.postDelayed(new Runnable() {
                         public void run() {
+
+                            Integer preostali = pitanja.size() - 2 - indexPitanja;
+                            if(preostali < 0) preostali++;
+                            postotakTacnih = (brojTacnih.doubleValue() / (indexPitanja + 1)) * 100;
+                            listener.onInputASent(brojTacnih.toString(), preostali.toString(), postotakTacnih.toString());
+
                             if(indexPitanja != pitanja.size() - 1) {
                                 pitanje = pitanja.get(++indexPitanja);
                                 odgovori.clear();
@@ -93,18 +102,14 @@ public class PitanjeFrag extends Fragment {
         }
     }
 
-    public void updateEditText(CharSequence newText) {
-
-    }
-
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-//        if (context instanceof InformacijeFrag.InformacijeFragListener) {
-//            listener = (PitanjeFragListener) context;
-//        } else {
-//            throw new RuntimeException(context.toString() + " must implement PitanjeFragListener");
-//        }
+        if (context instanceof PitanjeFragListener) {
+            listener = (PitanjeFragListener) context;
+        } else {
+            throw new RuntimeException(context.toString() + " must implement PitanjeFragListener");
+        }
     }
 
     @Override
