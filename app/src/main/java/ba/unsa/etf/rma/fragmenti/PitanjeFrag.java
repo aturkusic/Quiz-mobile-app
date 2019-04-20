@@ -55,14 +55,16 @@ public class PitanjeFrag extends Fragment {
             pitanja = new ArrayList<>(kviz.getPitanja());
             pitanja.remove(pitanja.size() - 1);
             Collections.shuffle(pitanja);
-            pitanje = pitanja.get(indexPitanja);
-            odgovori = pitanje.getOdgovori();
-            textPitanja.setText(pitanje.getNaziv());
+            if(pitanja.size() != 0) {
+                pitanje = pitanja.get(indexPitanja);
+                odgovori = pitanje.getOdgovori();
+                textPitanja.setText(pitanje.getNaziv());
 
-            Resources res = getResources();
-            adapter = new ListaOdgovoriFragAdapter(getActivity(), odgovori, res);
-            listaOdgovora.setAdapter(adapter);
+                Resources res = getResources();
+                adapter = new ListaOdgovoriFragAdapter(getActivity(), odgovori, res);
+                listaOdgovora.setAdapter(adapter);
 
+            }
 
             listaOdgovora.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override

@@ -43,7 +43,10 @@ public class InformacijeFrag extends Fragment {
 
             nazivKviza.setText(kviz.getNaziv());
             brojTacnih.setText("0");
-            brojPreostalih.setText(Integer.toString(kviz.getPitanja().size() - 2));
+            String preostali = "";
+            if(kviz.getPitanja().size() == 1) preostali = "0";
+            else preostali = Integer.toString(kviz.getPitanja().size() - 2);
+            brojPreostalih.setText(preostali);
             postotakTacnih.setText("0.0");
         }
 
