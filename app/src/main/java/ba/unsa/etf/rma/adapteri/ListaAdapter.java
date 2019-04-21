@@ -3,14 +3,18 @@ package ba.unsa.etf.rma.adapteri;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Filter;
 import android.widget.Filterable;
+import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.maltaisn.icondialog.Icon;
+import com.maltaisn.icondialog.IconHelper;
 import com.maltaisn.icondialog.IconView;
 
 import java.util.ArrayList;
@@ -65,7 +69,7 @@ public class ListaAdapter extends BaseAdapter implements Filterable {
     private static class ViewHolder{
 
         public TextView textImeKviza;
-        public IconView image;
+        public ImageView image;
 
     }
 
@@ -73,7 +77,7 @@ public class ListaAdapter extends BaseAdapter implements Filterable {
     public View getView(int position, View convertView, ViewGroup parent) {
 
         View vi = convertView;
-        ViewHolder holder;
+        final ViewHolder holder;
 
         if(convertView==null){
 
@@ -81,7 +85,7 @@ public class ListaAdapter extends BaseAdapter implements Filterable {
 
             holder = new ViewHolder();
             holder.textImeKviza = (TextView) vi.findViewById(R.id.imeKvizaLW);
-            holder.image = (IconView)vi.findViewById(R.id.image);
+            holder.image = (ImageView)vi.findViewById(R.id.image);
 
             vi.setTag( holder );
         }
@@ -96,13 +100,21 @@ public class ListaAdapter extends BaseAdapter implements Filterable {
         else {
             trenutniKviz = null;
             trenutniKviz = (Kviz) data.get(position);
+            IconHelper helper = IconHelper.getInstance(activity);
+            final Icon icon = helper.getIcon(Integer.parseInt(trenutniKviz.getKategorija().getId()));
+
+            helper.addLoadCallback(new IconHelper.LoadCallback() {
+                @Override
+                public void onDataLoaded() {
+                    if(icon != null)
+                        holder.image.setImageDrawable(icon.getDrawable(activity));
+                }
+            });
 
             if (trenutniKviz != null) {
                 holder.textImeKviza.setText(trenutniKviz.getNaziv());
-                if (!trenutniKviz.getKategorija().getId().equals("addkviz"))
-                    holder.image.setIcon(Integer.parseInt(trenutniKviz.getKategorija().getId()));
-                else
-                    holder.image.setImageResource(res.getIdentifier("ba.unsa.etf.rma:drawable/" + trenutniKviz.getKategorija().getId(), null, null));
+                if (trenutniKviz.getNaziv().equalsIgnoreCase("Dodaj Kviz"))
+                    holder.image.setImageResource(R.drawable.addkviz);
             }
         }
         return vi;

@@ -11,6 +11,8 @@ import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.TextView;
 
+import com.maltaisn.icondialog.Icon;
+import com.maltaisn.icondialog.IconHelper;
 import com.maltaisn.icondialog.IconView;
 
 import java.util.ArrayList;
@@ -74,7 +76,7 @@ public class KvizAdapter extends BaseAdapter implements Filterable {
     public View getView(int position, View convertView, ViewGroup parent) {
 
         View vi = convertView;
-        ViewHolder holder;
+        final ViewHolder holder;
 
         if(convertView==null){
 
@@ -97,15 +99,23 @@ public class KvizAdapter extends BaseAdapter implements Filterable {
         else {
             trenutniKviz = null;
             trenutniKviz = (Kviz) data.get(position);
+            IconHelper helper = IconHelper.getInstance(activity);
+            final Icon icon = helper.getIcon(Integer.parseInt(trenutniKviz.getKategorija().getId()));
 
+            helper.addLoadCallback(new IconHelper.LoadCallback() {
+                @Override
+                public void onDataLoaded() {
+                    if(icon != null)
+                        holder.image.setImageDrawable(icon.getDrawable(activity));
+                }
+            });
             if (trenutniKviz != null) {
                 holder.textImeKviza.setText(trenutniKviz.getNaziv());
-                if (!trenutniKviz.getKategorija().getId().equals("addkviz")) {
-                    holder.textBrojPitanja.setText(Integer.toString(trenutniKviz.getPitanja().size()));
-                    holder.image.setIcon(Integer.parseInt(trenutniKviz.getKategorija().getId()));
-                } else {
-                    holder.image.setImageResource(res.getIdentifier("ba.unsa.etf.rma:drawable/" + trenutniKviz.getKategorija().getId(), null, null));
+                if (trenutniKviz.getNaziv().equalsIgnoreCase("Dodaj Kviz")) {
+                    holder.image.setImageResource(R.drawable.addkviz);
                     holder.textBrojPitanja.setText("");
+                } else {
+                    holder.textBrojPitanja.setText(Integer.toString(trenutniKviz.getPitanja().size() - 1));
                 }
             }
         }

@@ -90,6 +90,7 @@ public class PitanjeFrag extends Fragment {
                                 textPitanja.setText(pitanje.getNaziv());
                             } else {
                                 textPitanja.setText("“Kviz je završen!");
+                                listaOdgovora.setEnabled(false);
                                 odgovori.clear();
                             }
                             adapter.setPozicijaKliknutog(-1);

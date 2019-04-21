@@ -190,7 +190,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
             if (resultCode == RESULT_OK) {
                 // Get String data from Intent
                 Kviz kviz = (Kviz) data.getSerializableExtra("povratniKviz");
-                ArrayList<Kategorija> kategorijee = (ArrayList<Kategorija>) data.getSerializableExtra("dodaneKategorije");
+                ArrayList<Kategorija> kategorijee = (ArrayList<Kategorija>) data.getSerializableExtra("dodaneKategorije"); // lista svih dodanih kategorija u dodajKvizAkt
                 String tip = data.getStringExtra("tip");
                 if(kategorijee != null) {
                     kategorije.clear();
@@ -198,7 +198,8 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
                         if(!k.getNaziv().equalsIgnoreCase("dodaj kategoriju")) kategorije.add(k);
                     }
                 }
-                if(tip.equalsIgnoreCase("izmjena")) daLiJeIzmjena = true;
+                if(tip.equalsIgnoreCase("izmjena"))
+                    daLiJeIzmjena = true;
                 else daLiJeIzmjena = false;
 
                 if(!daLiJeIzmjena && kviz != null)
@@ -230,7 +231,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
         addKviz.setNaziv("Dodaj Kviz");
         Kategorija cat1 = new Kategorija();
         cat1.setNaziv("Dodaj kviz");
-        cat1.setId("addkviz");
+        cat1.setId("1");
         addKviz.setKategorija(cat1);
         kvizovi.add(addKviz);
     }

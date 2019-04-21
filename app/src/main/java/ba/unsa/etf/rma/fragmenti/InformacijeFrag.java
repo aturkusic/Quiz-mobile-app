@@ -13,16 +13,11 @@ import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.klase.Kviz;
 
 public class InformacijeFrag extends Fragment {
-    private InformacijeFragListener listener;
     private TextView nazivKviza;
     private TextView brojTacnih;
     private TextView brojPreostalih;
     private TextView postotakTacnih;
     private Button zavrsiKvizBtn;
-
-    public interface InformacijeFragListener {
-        void onInputBSent(CharSequence brojTacnih, CharSequence brojPreostalih, CharSequence postotakTacnih);
-    }
 
     @Override
     public View onCreateView(
@@ -64,20 +59,5 @@ public class InformacijeFrag extends Fragment {
         postotakTacnih.setText(postotakTacnihChar);
     }
 
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        if (context instanceof InformacijeFragListener) {
-            listener = (InformacijeFragListener) context;
-        } else {
-            throw new RuntimeException(context.toString() + " must implement InformacijeFragListener");
-        }
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        listener = null;
-    }
 
 }

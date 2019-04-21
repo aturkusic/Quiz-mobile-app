@@ -15,7 +15,7 @@ import ba.unsa.etf.rma.fragmenti.PitanjeFrag;
 import ba.unsa.etf.rma.klase.Kviz;
 import ba.unsa.etf.rma.klase.Pitanje;
 
-public class IgrajKvizAkt extends AppCompatActivity implements PitanjeFrag.PitanjeFragListener, InformacijeFrag.InformacijeFragListener {
+public class IgrajKvizAkt extends AppCompatActivity implements PitanjeFrag.PitanjeFragListener {
 
     private PitanjeFrag pitanjeFrag;
     private InformacijeFrag informacijeFrag;
@@ -60,8 +60,4 @@ public class IgrajKvizAkt extends AppCompatActivity implements PitanjeFrag.Pitan
         informacijeFrag.updateEditText(brojTacnih, brojPreostalih, postotakTacnih);
     }
 
-    @Override
-    public void onInputBSent(CharSequence brojTacnih, CharSequence brojPreostalih, CharSequence postotakTacnih) {
-
-    }
 }
