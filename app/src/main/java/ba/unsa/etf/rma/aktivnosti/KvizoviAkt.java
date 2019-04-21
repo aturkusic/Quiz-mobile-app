@@ -110,7 +110,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
     private boolean dodajIzmijeniKviz(int position) {
         Intent intent = new Intent(KvizoviAkt.this, DodajKvizAkt.class);
         Kviz kviz;
-        if(siriL) kviz = (Kviz) detailFrag.getAdapter().getItem(position);
+        if(adapter == null) kviz = (Kviz) detailFrag.getAdapter().getItem(position);
         else  kviz = (Kviz) adapter.getItem(position);
         position = pronadjiPozicijuUListi(kviz.getNaziv());
         if (position == kvizovi.size() - 1) { // ako je kliknuto na zadnji element tj dodavanje novog kviza
