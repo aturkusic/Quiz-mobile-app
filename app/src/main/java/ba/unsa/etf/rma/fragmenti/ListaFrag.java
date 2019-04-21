@@ -1,11 +1,13 @@
 package ba.unsa.etf.rma.fragmenti;
 
 import android.app.Fragment;
+import android.content.Context;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -19,9 +21,15 @@ import ba.unsa.etf.rma.klase.Kategorija;
 import ba.unsa.etf.rma.klase.Kviz;
 
 public class ListaFrag extends Fragment {
+    private Filtriranje filtriranje;
     private ArrayList<Kategorija> kategorije = new ArrayList<>();
     private KategorijeAdapter adapter;
     private ListView lista;
+
+    public interface Filtriranje {
+        void filtriraj(String kategorija, int i);
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
@@ -40,7 +48,37 @@ public class ListaFrag extends Fragment {
             lista.setAdapter(adapter);
             adapter.notifyDataSetChanged();
 
+
+            lista.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    adapter.setIndexOdabranog(position);
+                    adapter.notifyDataSetChanged();
+                    filtriranje.filtriraj(kategorije.get(position).getNaziv(), position);
+                }
+            });
+
         }
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (context instanceof Filtriranje) {
+            filtriranje = (Filtriranje) context;
+        } else {
+            throw new RuntimeException(context.toString() + " must implement ZaKomunikacijuSaBazom");
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        filtriranje = null;
+    }
+
+    public void azurirajKategorije(ArrayList<Kategorija> kategorije) {
+        adapter.notifyDataSetChanged();
     }
 
 }

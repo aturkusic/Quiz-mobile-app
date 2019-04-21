@@ -89,7 +89,6 @@ public class KvizAdapter extends BaseAdapter implements Filterable {
         }
         else
             holder=(ViewHolder)vi.getTag();
-
         if(data.size()<=0)
         {
             holder.textImeKviza.setText("Nema podataka");

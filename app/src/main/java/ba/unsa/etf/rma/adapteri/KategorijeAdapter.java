@@ -3,6 +3,7 @@ package ba.unsa.etf.rma.adapteri;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,6 +22,7 @@ public class KategorijeAdapter extends BaseAdapter {
         private ArrayList<Kategorija> data, dataCopy;
         private static LayoutInflater inflater = null;
         public Resources res;
+        private int indexOdabranog = 0;
         private Kategorija trenutnaKategorija = null;
 
 
@@ -49,8 +51,16 @@ public class KategorijeAdapter extends BaseAdapter {
             return position;
         }
 
+    public int getIndexOdabranog() {
+        return indexOdabranog;
+    }
 
-        private static class ViewHolder{
+    public void setIndexOdabranog(int indexOdabranog) {
+        this.indexOdabranog = indexOdabranog;
+    }
+
+
+    private static class ViewHolder{
 
             public TextView textImeKviza;
             public IconView image;
@@ -84,9 +94,12 @@ public class KategorijeAdapter extends BaseAdapter {
 
                 if (trenutnaKategorija != null) {
                     holder.textImeKviza.setText(trenutnaKategorija.getNaziv());
-                    holder.image.setImageResource(res.getIdentifier("ba.unsa.etf.rma:drawable/bluedot", null, null));
+                    if(position != indexOdabranog)
+                        holder.image.setImageResource(res.getIdentifier("ba.unsa.etf.rma:drawable/bluedot", null, null));
+                    else holder.image.setImageResource(res.getIdentifier("ba.unsa.etf.rma:drawable/greendot", null, null));
                 }
             }
+
             return vi;
         }
 }

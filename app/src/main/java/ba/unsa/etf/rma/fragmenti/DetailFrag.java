@@ -1,11 +1,13 @@
 package ba.unsa.etf.rma.fragmenti;
 
 import android.app.Fragment;
+import android.content.Context;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.ListView;
 
@@ -21,6 +23,12 @@ public class DetailFrag extends Fragment {
     private ArrayList<Kviz> kvizovi = new ArrayList<>();
     private KvizAdapter adapter;
     private GridView grid;
+    private ZaKomunikacijuSaBaznom interfejs;
+
+    public interface ZaKomunikacijuSaBaznom {
+        void dodajKviz(int position);
+        void igrajKviz(int position);
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -38,7 +46,46 @@ public class DetailFrag extends Fragment {
             adapter = new KvizAdapter(getActivity(), kvizovi, getResources());
             grid.setAdapter(adapter);
 
+            grid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    interfejs.igrajKviz(position);
+                }
+            });
+
+            grid.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+                @Override
+                public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                    interfejs.dodajKviz(position);
+                    return true;
+                }
+            });
+
         }
+    }
+
+    public void dodajIzmijeniKviz(ArrayList<Kviz> kviz_ovi) {
+        adapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (context instanceof ZaKomunikacijuSaBaznom) {
+            interfejs = (ZaKomunikacijuSaBaznom) context;
+        } else {
+            throw new RuntimeException(context.toString() + " must implement ZaKomunikacijuSaBazom");
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        interfejs = null;
+    }
+
+    public KvizAdapter getAdapter() {
+        return adapter;
     }
 
 }
