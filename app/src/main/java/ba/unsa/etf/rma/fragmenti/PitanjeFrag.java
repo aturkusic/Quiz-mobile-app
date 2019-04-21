@@ -81,7 +81,8 @@ public class PitanjeFrag extends Fragment {
                             Integer preostali = pitanja.size() - 2 - indexPitanja;
                             if(preostali < 0) preostali++;
                             postotakTacnih = (brojTacnih.doubleValue() / (indexPitanja + 1)) * 100;
-                            listener.onInputASent(brojTacnih.toString(), preostali.toString(), postotakTacnih.toString());
+                            if(listener != null)
+                                listener.onInputASent(brojTacnih.toString(), preostali.toString(), postotakTacnih.toString());
 
                             if(indexPitanja != pitanja.size() - 1) {
                                 pitanje = pitanja.get(++indexPitanja);
