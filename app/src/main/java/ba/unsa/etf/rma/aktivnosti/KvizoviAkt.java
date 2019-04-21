@@ -2,7 +2,6 @@ package ba.unsa.etf.rma.aktivnosti;
 
 
 import android.app.FragmentManager;
-import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.support.v7.app.AppCompatActivity;
@@ -22,7 +21,7 @@ import ba.unsa.etf.rma.klase.Kviz;
 import ba.unsa.etf.rma.adapteri.ListaAdapter;
 import ba.unsa.etf.rma.klase.Pitanje;
 import ba.unsa.etf.rma.R;
-import ba.unsa.etf.rma.adapteri.SpinnerAdapter;
+import ba.unsa.etf.rma.adapteri.SpinerAdapter;
 
 public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomunikacijuSaBaznom, ListaFrag.Filtriranje {
     private static final int SECOND_ACTIVITY_REQUEST_CODE = 0;
@@ -61,7 +60,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
             adapter = new ListaAdapter(GlavnaKlasa, kvizovi, res);
             list.setAdapter(adapter);
 
-            SpinnerAdapter adapterSpinner = new SpinnerAdapter(GlavnaKlasa, kategorije);
+            SpinerAdapter adapterSpinner = new SpinerAdapter(GlavnaKlasa, kategorije);
             spinner.setAdapter(adapterSpinner);
 
 

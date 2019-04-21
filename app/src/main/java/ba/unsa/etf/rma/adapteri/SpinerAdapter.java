@@ -14,10 +14,10 @@ import java.util.ArrayList;
 import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.klase.Kategorija;
 
-public class SpinnerAdapter extends ArrayAdapter<Kategorija> {
+public class SpinerAdapter extends ArrayAdapter<Kategorija> {
     ArrayList<Kategorija> lista;
 
-    public SpinnerAdapter(Context context, ArrayList<Kategorija> countryList) {
+    public SpinerAdapter(Context context, ArrayList<Kategorija> countryList) {
         super(context, 0, countryList);
         lista = countryList;
     }

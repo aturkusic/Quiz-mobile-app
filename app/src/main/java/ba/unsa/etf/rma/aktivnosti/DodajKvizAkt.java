@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
+import ba.unsa.etf.rma.adapteri.SpinerAdapter;
 import ba.unsa.etf.rma.klase.Kategorija;
 import ba.unsa.etf.rma.klase.Kviz;
 import ba.unsa.etf.rma.adapteri.ListaPitanjaAdapter;
@@ -98,11 +99,11 @@ public class DodajKvizAkt extends AppCompatActivity {
         listaPitanja.setAdapter( adapter );
         adapter1 = new ListaPitanjaAdapter(this, listaMogucih, resources );
         listaMogucihPitanja.setAdapter( adapter1 );
-        spinnerAdapter = new ba.unsa.etf.rma.adapteri.SpinnerAdapter(this, kategorije);
+        spinnerAdapter = new SpinerAdapter(this, kategorije);
         spinner.setAdapter(spinnerAdapter);
         imeKviza.setText(naziv);
 
-        spinner.setSelection(((ba.unsa.etf.rma.adapteri.SpinnerAdapter) spinnerAdapter).getPozicija(kategorija));
+        spinner.setSelection(((SpinerAdapter) spinnerAdapter).getPozicija(kategorija));
 
         listaPitanja.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -133,6 +134,7 @@ public class DodajKvizAkt extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 if (position == kategorije.size() - 1) {
+                    spinner.setSelection(0);
                     Intent intent = new Intent(DodajKvizAkt.this, DodajKategorijuAkt.class);
                     intent.putExtra("kategorije", kategorije);
                     startActivityForResult(intent, SECOND_ACTIVITY_REQUEST_CODE1);
