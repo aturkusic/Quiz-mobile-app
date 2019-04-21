@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Filter;
 import android.widget.Filterable;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.maltaisn.icondialog.Icon;
@@ -68,7 +69,7 @@ public class KvizAdapter extends BaseAdapter implements Filterable {
 
         public TextView textImeKviza;
         public TextView textBrojPitanja;
-        public IconView image;
+        public ImageView image;
 
     }
 
@@ -85,7 +86,7 @@ public class KvizAdapter extends BaseAdapter implements Filterable {
             holder = new ViewHolder();
             holder.textImeKviza = (TextView) vi.findViewById(R.id.nazivKvizaGrid);
             holder.textBrojPitanja = (TextView) vi.findViewById(R.id.brojPitanjaGrid);
-            holder.image = (IconView)vi.findViewById(R.id.iconaGrid);
+            holder.image = (ImageView) vi.findViewById(R.id.iconaGrid);
 
             vi.setTag( holder );
         }

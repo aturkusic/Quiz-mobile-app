@@ -254,4 +254,28 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
             detailFrag.getAdapter().getFilter().filter(kategorije.get(pozicija).getNaziv());
         }
     }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+
+        savedInstanceState.putSerializable("kvizovi", kvizovi);
+        savedInstanceState.putSerializable("kategorije", kategorije);
+
+        super.onSaveInstanceState(savedInstanceState);
+    }
+
+    @Override
+    public void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        kvizovi.clear();
+        kvizovi.addAll((ArrayList<Kviz>) savedInstanceState.getSerializable("kvizovi"));
+        kategorije.clear();
+        kategorije.addAll((ArrayList<Kategorija>) savedInstanceState.getSerializable("kategorije"));
+
+        if(adapter == null) {
+            detailFrag.dodajIzmijeniKviz(new ArrayList<>(kvizovi));
+            listaFrag.azurirajKategorije(new ArrayList<>(kategorije));
+        }
+    }
+
 }
