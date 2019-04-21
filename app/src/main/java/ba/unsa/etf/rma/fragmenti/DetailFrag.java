@@ -65,6 +65,8 @@ public class DetailFrag extends Fragment {
     }
 
     public void dodajIzmijeniKviz(ArrayList<Kviz> kviz_ovi) {
+        kvizovi.clear();
+        kvizovi.addAll(kviz_ovi);
         adapter.notifyDataSetChanged();
     }
 

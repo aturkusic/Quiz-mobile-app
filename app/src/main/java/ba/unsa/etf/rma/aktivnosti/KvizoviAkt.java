@@ -211,8 +211,8 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
                 if(adapter != null)
                     adapter.notifyDataSetChanged();
                 else {
-                    detailFrag.dodajIzmijeniKviz(kvizovi);
-                    listaFrag.azurirajKategorije(kategorije);
+                    detailFrag.dodajIzmijeniKviz(new ArrayList<>(kvizovi));
+                    listaFrag.azurirajKategorije(new ArrayList<>(kategorije));
                 }
             }
         }

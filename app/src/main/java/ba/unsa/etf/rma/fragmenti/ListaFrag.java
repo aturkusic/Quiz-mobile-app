@@ -77,7 +77,9 @@ public class ListaFrag extends Fragment {
         filtriranje = null;
     }
 
-    public void azurirajKategorije(ArrayList<Kategorija> kategorije) {
+    public void azurirajKategorije(ArrayList<Kategorija> kategorije1) {
+        kategorije.clear();
+        kategorije.addAll(kategorije1);
         adapter.notifyDataSetChanged();
     }
 
