@@ -12,7 +12,9 @@
         <activity android:name=".aktivnosti.DodajKategorijuAkt" />
         <activity android:name=".aktivnosti.DodajPitanjeAkt" />
         <activity android:name=".aktivnosti.DodajKvizAkt" />
-        <activity android:name=".aktivnosti.IgrajKvizAkt" />
+        <activity android:name=".aktivnosti.IgrajKvizAkt"
+            android:configChanges="orientation|screenSize">
+        </activity>
         <activity android:name=".aktivnosti.KvizoviAkt" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
