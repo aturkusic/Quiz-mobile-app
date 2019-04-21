@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:weightSum="10">
+
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_weight="3.5"
+        android:layout_height="match_parent"
+        android:id="@+id/listPlace"/>
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_weight="6.5"
+        android:layout_height="match_parent"
+        android:id="@+id/detailPlace"/>
+</LinearLayout>
