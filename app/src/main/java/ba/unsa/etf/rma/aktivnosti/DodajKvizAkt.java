@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -18,11 +19,24 @@ import android.widget.Spinner;
 import android.widget.SpinnerAdapter;
 import android.widget.Toast;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.common.collect.Lists;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 
 import ba.unsa.etf.rma.adapteri.SpinerAdapter;
@@ -47,7 +61,7 @@ public class DodajKvizAkt extends AppCompatActivity {
     Spinner spinner;
     ArrayList<Kviz> kvizovi; //svi kvizovi
     String svrha;
-
+    String token;
     ListView listaPitanja;
     ListView listaMogucihPitanja;
     EditText imeKviza;
@@ -66,6 +80,9 @@ public class DodajKvizAkt extends AppCompatActivity {
         spinner = (Spinner) findViewById(R.id.spKategorije);
         dugme = (Button) findViewById(R.id.btnDodajKviz);
         importujBtn = (Button) findViewById(R.id.btnImportKviz);
+
+        new DobaviTokenKlasa().execute();
+        new DobaviKviz().execute("https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/Kvizovi?access_token=");
 
 
         //dobavljanje podataka putem intenta i postavljanje default vrijednosti kao eleent liste za dodavanje pitanja
@@ -380,4 +397,75 @@ public class DodajKvizAkt extends AppCompatActivity {
     public void setKviz(Kviz kviz) {
         this.kviz = kviz;
     }
+
+    private class DobaviTokenKlasa extends AsyncTask<URL, Integer, String> {
+        protected String doInBackground(URL... urls) {
+            InputStream is = getResources().openRawResource(R.raw.secret);
+            GoogleCredential credentials = null;
+            try {
+                credentials = GoogleCredential.fromStream(is).createScoped(Lists.newArrayList("https://www.googleapis.com/auth/datastore"));
+                credentials.refreshToken();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            String TOKEN = credentials.getAccessToken();
+            return TOKEN;
+
+        }
+
+        protected void onPostExecute(String result) {
+            token = result;
+        }
+    }
+
+    private class DobaviKviz extends AsyncTask<String, Integer, Void> {
+        protected Void doInBackground(String... urls) {
+            String url1 = urls[0] + token;
+            URL url;
+            try {
+                url = new URL(url1);
+                HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
+                InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+                String rezultat = convertStreamToString(in);
+                JSONObject jo = null;
+
+                jo = new JSONObject(rezultat);
+                JSONObject kvizovi = jo.getJSONObject("Kvizovi");
+
+
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }  catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            return null ;
+        }
+
+
+    }
+
+    public String convertStreamToString(InputStream is) {
+        BufferedReader reader = new BufferedReader(new
+                InputStreamReader(is));
+        StringBuilder sb = new StringBuilder();
+        String line = null;
+        try {
+            while ((line = reader.readLine()) != null) {
+                sb.append(line + "\n");
+            }
+        } catch (IOException e) {
+        } finally {
+            try {
+                is.close();
+            } catch (IOException e) {
+            }
+        }
+        return sb.toString();
+    }
+
+
+
 }
