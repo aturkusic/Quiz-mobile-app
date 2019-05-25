@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class Pitanje implements Serializable {
+    private String id;
     private String naziv = "";
     private String tekstPitanja = "";
     private ArrayList<String> odgovori = new ArrayList<>();
@@ -19,6 +20,14 @@ public class Pitanje implements Serializable {
     }
 
     public Pitanje() {
+    }
+
+    public Pitanje(String id, String naziv, String tekstPitanja, ArrayList<String> odgovori, String tacanOdgovor) {
+        this.id = id;
+        this.naziv = naziv;
+        this.tekstPitanja = tekstPitanja;
+        this.odgovori = odgovori;
+        this.tacanOdgovor = tacanOdgovor;
     }
 
     public String getNaziv() {
@@ -63,5 +72,13 @@ public class Pitanje implements Serializable {
     public boolean equals(Object o) {
         Pitanje pitanje = (Pitanje) o;
         return naziv.equalsIgnoreCase(pitanje.naziv);
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 }

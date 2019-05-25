@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 public class Kviz implements Serializable {
+    private String id;
     private String naziv = "";
     private ArrayList<Pitanje> pitanja = new ArrayList<>();
     private  Kategorija kategorija = new Kategorija();
@@ -15,6 +16,13 @@ public class Kviz implements Serializable {
     }
 
     public Kviz() {
+    }
+
+    public Kviz(String id, String naziv, ArrayList<Pitanje> pitanja, Kategorija kategorija) {
+        this.id = id;
+        this.naziv = naziv;
+        this.pitanja = pitanja;
+        this.kategorija = kategorija;
     }
 
     public String getNaziv() {
@@ -47,5 +55,13 @@ public class Kviz implements Serializable {
 
     public String getKategorijaNaziv() {
         return kategorija.getNaziv().toLowerCase();
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 }

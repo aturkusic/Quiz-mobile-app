@@ -277,5 +277,9 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
             listaFrag.azurirajKategorije(new ArrayList<>(kategorije));
         }
     }
+    public interface IListaMogucihAsyncResponse {
+        void processFinish(ArrayList<Pitanje> output);
+    }
+
 
 }

@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -32,11 +33,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 
 import ba.unsa.etf.rma.adapteri.SpinerAdapter;
@@ -46,12 +46,14 @@ import ba.unsa.etf.rma.adapteri.ListaPitanjaAdapter;
 import ba.unsa.etf.rma.klase.Pitanje;
 import ba.unsa.etf.rma.R;
 
-public class DodajKvizAkt extends AppCompatActivity {
+public class DodajKvizAkt extends AppCompatActivity implements KvizoviAkt.IListaMogucihAsyncResponse {
     private static final int SECOND_ACTIVITY_REQUEST_CODE = 0;
     private static final int SECOND_ACTIVITY_REQUEST_CODE1 = 1;
+    private DobaviMogucaPitanja dobaviMogucaPitanjaAsync = new DobaviMogucaPitanja();
     ArrayList<Pitanje> pitanja = new ArrayList<>();
+    ArrayList<Pitanje> listaMogucih = new ArrayList<>();
     ListaPitanjaAdapter adapter;
-    ListaPitanjaAdapter adapter1;
+    ListaPitanjaAdapter adapterMogucihPitanja;
     String naziv;
     Kategorija kategorija;
     Kategorija dodanaKategorija = null;
@@ -81,9 +83,6 @@ public class DodajKvizAkt extends AppCompatActivity {
         dugme = (Button) findViewById(R.id.btnDodajKviz);
         importujBtn = (Button) findViewById(R.id.btnImportKviz);
 
-        new DobaviTokenKlasa().execute();
-        new DobaviKviz().execute("https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/Kvizovi?access_token=");
-
 
         //dobavljanje podataka putem intenta i postavljanje default vrijednosti kao eleent liste za dodavanje pitanja
         Intent intent = getIntent();
@@ -108,19 +107,21 @@ public class DodajKvizAkt extends AppCompatActivity {
 
         if(svrha.equals("izmjena")) dugme.setText("Izmijeni kviz");
 
-        final ArrayList<Pitanje> listaMogucih = new ArrayList<Pitanje>();
-
         //postavljanje adaptera i vrijednosti polja ako je u pitanju izmjena
         Resources resources = getResources();
         adapter = new ListaPitanjaAdapter(this, pitanja, resources );
         listaPitanja.setAdapter( adapter );
-        adapter1 = new ListaPitanjaAdapter(this, listaMogucih, resources );
-        listaMogucihPitanja.setAdapter( adapter1 );
+        adapterMogucihPitanja = new ListaPitanjaAdapter(this, listaMogucih, resources );
+        listaMogucihPitanja.setAdapter(adapterMogucihPitanja);
         spinnerAdapter = new SpinerAdapter(this, kategorije);
         spinner.setAdapter(spinnerAdapter);
         imeKviza.setText(naziv);
 
         spinner.setSelection(((SpinerAdapter) spinnerAdapter).getPozicija(kategorija));
+
+        new DobaviTokenKlasa().execute();
+        dobaviMogucaPitanjaAsync.delegat = this;
+        dobaviMogucaPitanjaAsync.execute("Pitanja");
 
         listaPitanja.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -128,7 +129,7 @@ public class DodajKvizAkt extends AppCompatActivity {
                 if (position != pitanja.size() - 1) {
                     listaMogucih.add(pitanja.remove(position));
                     adapter.notifyDataSetChanged();
-                    adapter1.notifyDataSetChanged();
+                    adapterMogucihPitanja.notifyDataSetChanged();
                 } else {
                     Intent intent = new Intent(DodajKvizAkt.this, DodajPitanjeAkt.class);
                     intent.putExtra("pitanje", pitanja.get(position));
@@ -143,7 +144,7 @@ public class DodajKvizAkt extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 pitanja.add(pitanja.size() - 1, listaMogucih.remove(position));
                 adapter.notifyDataSetChanged();
-                adapter1.notifyDataSetChanged();
+                adapterMogucihPitanja.notifyDataSetChanged();
             }
         });
 
@@ -243,6 +244,7 @@ public class DodajKvizAkt extends AppCompatActivity {
             if (resultCode == RESULT_OK) {
                 Kategorija kategorija = (Kategorija) data.getSerializableExtra("povratnaKategorija");
                 dodanaKategorija = kategorija;
+                new DodajKategorijeUBazu().execute("Kategorije");
                 kategorije.add(kategorije.size() - 1, kategorija);
                 spinner.setSelection(kategorije.size() - 2);
             }
@@ -398,6 +400,12 @@ public class DodajKvizAkt extends AppCompatActivity {
         this.kviz = kviz;
     }
 
+    @Override
+    public void processFinish(ArrayList<Pitanje> output) { // metoda interfejsa yza komunikaciju izmedju asynctask i aktivnosti
+        listaMogucih.addAll(output);
+        adapterMogucihPitanja.notifyDataSetChanged();
+    }
+
     private class DobaviTokenKlasa extends AsyncTask<URL, Integer, String> {
         protected String doInBackground(URL... urls) {
             InputStream is = getResources().openRawResource(R.raw.secret);
@@ -418,9 +426,15 @@ public class DodajKvizAkt extends AppCompatActivity {
         }
     }
 
-    private class DobaviKviz extends AsyncTask<String, Integer, Void> {
-        protected Void doInBackground(String... urls) {
-            String url1 = urls[0] + token;
+    private class DobaviMogucaPitanja extends AsyncTask<String, Integer, ArrayList<Pitanje>> {
+        public KvizoviAkt.IListaMogucihAsyncResponse delegat = null;
+        protected  ArrayList<Pitanje> doInBackground(String... urls) {//prvi param kolekcija drugi id dokumenta
+            String url1;
+            ArrayList<Pitanje> listaMogucih = new ArrayList<>();
+            if(urls.length == 1)
+                url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "?access_token=" + token;
+            else
+                url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "/" + urls[1] + "?access_token=" + token;
             URL url;
             try {
                 url = new URL(url1);
@@ -428,11 +442,27 @@ public class DodajKvizAkt extends AppCompatActivity {
                 InputStream in = new BufferedInputStream(urlConnection.getInputStream());
                 String rezultat = convertStreamToString(in);
                 JSONObject jo = null;
-
                 jo = new JSONObject(rezultat);
-                JSONObject kvizovi = jo.getJSONObject("Kvizovi");
-
-
+                JSONArray items = new JSONArray();
+                if(urls[0].equalsIgnoreCase("Pitanja")) {
+                    items = jo.getJSONArray("documents");
+                    ArrayList<Pitanje> pitanja = ucitajSvaPitanjaIzBaze(items);
+                    for(Pitanje p : pitanja){
+                        if (!kviz.getPitanja().contains(p))
+                            listaMogucih.add(p);
+                    }
+                }
+//                for(int i = 0; i < items.length(); i++) {
+//                   JSONObject name = items.getJSONObject(i);
+//                   JSONObject kviz = name.getJSONObject("fields");
+//                    String naziv = kviz.getString("naziv");
+//                    String idKat = kviz.getString("idKategorije");
+//                    ArrayList<String> pitanja = new ArrayList<String>();
+//                    JSONArray jArray = kviz.getJSONArray("pitanja");
+//                    for (int j = 0; i < jArray.length();i++){
+//                        pitanja.add(jArray.getString(i));
+//                   }
+//                }
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             } catch (IOException e) {
@@ -440,16 +470,84 @@ public class DodajKvizAkt extends AppCompatActivity {
             }  catch (JSONException e) {
                 e.printStackTrace();
             }
+            return listaMogucih;
+        }
+
+
+        @Override
+        protected void onPostExecute( ArrayList<Pitanje> lista) {
+            delegat.processFinish(lista);
+        }
+    }
+
+    private class DodajKategorijeUBazu extends AsyncTask<String, Integer, Void> {
+
+        protected  Void doInBackground(String... urls) {//prvi param kolekcija drugi id dokumenta
+            String url1;
+            if(urls.length == 1)
+                url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "?access_token=" + token;
+            else
+                url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "/" + urls[1] + "?access_token=" + token;
+            URL url;
+            try {
+                url = new URL(url1);
+                HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
+                urlConnection.setDoInput(true);
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setRequestProperty("Content-Type", "application/json");
+                urlConnection.setRequestProperty("Accept", "application/json");
+
+                String dokument = "{ \"fields\": { \"idIkonice\": { \"integerValue\": \"" + dodanaKategorija.getId() +"\"}, \"naziv\": { \"stringValue\": \"" + dodanaKategorija.getNaziv() + "\"}}}";
+                try(OutputStream os = urlConnection.getOutputStream()) {
+                    byte[] input = dokument.getBytes("utf-8");
+                    os.write(input, 0, input.length);
+                }
+                int code = urlConnection.getResponseCode();
+                InputStream odgovor = urlConnection.getInputStream();
+                try(BufferedReader br = new BufferedReader(new InputStreamReader(odgovor, "utf-8"))) {
+                    StringBuilder response = new StringBuilder();
+                    String responseLine = null;
+                    while ((responseLine = br.readLine()) != null) {
+                        response.append(responseLine.trim());
+                    }
+                    Log.d("ODGOVOR", response.toString());
+                }
+            }  catch (IOException e) {
+                e.printStackTrace();
+            }
 
             return null ;
         }
 
-
     }
 
-    public String convertStreamToString(InputStream is) {
-        BufferedReader reader = new BufferedReader(new
-                InputStreamReader(is));
+    private ArrayList<Pitanje> ucitajSvaPitanjaIzBaze(JSONArray items) {
+        ArrayList<Pitanje> pitanjaIzBaze = new ArrayList<>();
+         try {
+            for(int i = 0; i < items.length(); i++) {
+                JSONObject name = null;
+                name = items.getJSONObject(i);
+                JSONObject kviz = name.getJSONObject("fields");
+                String id = name.getString("name");
+                String naziv = kviz.getJSONObject("naziv").getString("stringValue");
+                int indexTacnog = Integer.parseInt(kviz.getJSONObject("indexTacnog").getString("integerValue"));
+                ArrayList<String> odgovori = new ArrayList<String>();
+                JSONArray jArray = kviz.getJSONObject("odgovori").getJSONObject("arrayValue").getJSONArray("values");
+                for (int j = 0; i < jArray.length();i++){
+                    odgovori.add(jArray.getJSONObject(i).getString("stringValue"));
+                }
+                Pitanje pitanje = new Pitanje(id, naziv, naziv, odgovori, odgovori.get(indexTacnog));
+                pitanjaIzBaze.add(pitanje);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return pitanjaIzBaze;
+    }
+
+
+    public static String convertStreamToString(InputStream is) {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
         StringBuilder sb = new StringBuilder();
         String line = null;
         try {
@@ -465,7 +563,5 @@ public class DodajKvizAkt extends AppCompatActivity {
         }
         return sb.toString();
     }
-
-
 
 }
