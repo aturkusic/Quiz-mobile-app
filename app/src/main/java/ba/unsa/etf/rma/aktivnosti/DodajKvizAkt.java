@@ -189,7 +189,12 @@ public class DodajKvizAkt extends AppCompatActivity implements KvizoviAkt.ILista
                 imeKviza.setHint("");
                 imeKviza.setBackgroundColor(0x00000000);
                 kategorija = (Kategorija) spinner.getSelectedItem();
-                kviz = new Kviz(imeKviza.getText().toString(), pitanja, kategorija);
+                String id = kviz.getId();
+                kviz = new Kviz(id, imeKviza.getText().toString(), pitanja, kategorija);
+                if(svrha.equalsIgnoreCase("izmjena"))
+                    new DodajUBazu().execute("Kvizovi", kviz.getId()); // izmjena u bazi
+                else
+                    new DodajUBazu().execute("Kvizovi", String.valueOf(kviz.hashCode())); // dodajem u bazu
                 Intent povratni = new Intent();
                 povratni.putExtra("povratniKviz", kviz);
                 povratni.putExtra("dodaneKategorije", kategorije);
@@ -237,6 +242,15 @@ public class DodajKvizAkt extends AppCompatActivity implements KvizoviAkt.ILista
             if (resultCode == RESULT_OK) {
                 // Get String data from Intent
                 Pitanje pitanje = (Pitanje) data.getSerializableExtra("povratnoPitanje");
+                String odgovori = "";
+                int j = 0;
+                for(String o : pitanje.getOdgovori()) {// odgovore stavljam u string kako bih mogao dodat u bazu
+                    if (j != pitanje.getOdgovori().size() - 1)
+                        odgovori += o + ",";
+                    else odgovori += o;
+                }
+                new DodajUBazu().execute("Pitanja", String.valueOf(pitanje.hashCode()), pitanje.getNaziv(), odgovori,
+                        String.valueOf(pitanje.getIndexTacnog(pitanje.getTacanOdgovor())));
                 pitanja.add(pitanja.size() - 1, pitanje);
                 adapter.notifyDataSetChanged();
             }
@@ -244,7 +258,7 @@ public class DodajKvizAkt extends AppCompatActivity implements KvizoviAkt.ILista
             if (resultCode == RESULT_OK) {
                 Kategorija kategorija = (Kategorija) data.getSerializableExtra("povratnaKategorija");
                 dodanaKategorija = kategorija;
-                new DodajKategorijeUBazu().execute("Kategorije");
+                new DodajUBazu().execute("Kategorije", String.valueOf(dodanaKategorija.hashCode())); // dodajem u bazu
                 kategorije.add(kategorije.size() - 1, kategorija);
                 spinner.setSelection(kategorije.size() - 2);
             }
@@ -272,6 +286,7 @@ public class DodajKvizAkt extends AppCompatActivity implements KvizoviAkt.ILista
                                         kategorije.add(kategorije.size() - 1, kat);
                                         spinner.setSelection(kategorije.size() - 2);
                                         dodanaKategorija = kat;
+                                        new DodajUBazu().execute("Kategorije", String.valueOf(dodanaKategorija.hashCode())); // dodajem u bazu
                                     }
                                 } else {
                                     Pitanje pitanje = new Pitanje();
@@ -282,6 +297,15 @@ public class DodajKvizAkt extends AppCompatActivity implements KvizoviAkt.ILista
                                     }
                                     pitanje.setTacanOdgovor(pitanje.getOdgovori().get(Integer.parseInt(niz[2])));
                                     pitanja.add(pitanja.size() - 1, pitanje);
+                                    String odgovori = "";
+                                    int j = 0;
+                                    for(String o : pitanje.getOdgovori()) {// odgovore stavljam u string kako bih mogao dodat u bazu
+                                        if (j != pitanje.getOdgovori().size() - 1)
+                                            odgovori += o + ",";
+                                        else odgovori += o;
+                                    }
+                                    new DodajUBazu().execute("Pitanja", String.valueOf(pitanje.hashCode()), pitanje.getNaziv(), odgovori,
+                                            String.valueOf(pitanje.getIndexTacnog(pitanje.getTacanOdgovor())));
                                     adapter.notifyDataSetChanged();
                                 }
                                 i++;
@@ -401,7 +425,7 @@ public class DodajKvizAkt extends AppCompatActivity implements KvizoviAkt.ILista
     }
 
     @Override
-    public void processFinish(ArrayList<Pitanje> output) { // metoda interfejsa yza komunikaciju izmedju asynctask i aktivnosti
+    public void processFinish(ArrayList<Pitanje> output) { // metoda interfejsa za komunikaciju izmedju asynctask i aktivnosti
         listaMogucih.addAll(output);
         adapterMogucihPitanja.notifyDataSetChanged();
     }
@@ -452,17 +476,6 @@ public class DodajKvizAkt extends AppCompatActivity implements KvizoviAkt.ILista
                             listaMogucih.add(p);
                     }
                 }
-//                for(int i = 0; i < items.length(); i++) {
-//                   JSONObject name = items.getJSONObject(i);
-//                   JSONObject kviz = name.getJSONObject("fields");
-//                    String naziv = kviz.getString("naziv");
-//                    String idKat = kviz.getString("idKategorije");
-//                    ArrayList<String> pitanja = new ArrayList<String>();
-//                    JSONArray jArray = kviz.getJSONArray("pitanja");
-//                    for (int j = 0; i < jArray.length();i++){
-//                        pitanja.add(jArray.getString(i));
-//                   }
-//                }
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             } catch (IOException e) {
@@ -480,28 +493,53 @@ public class DodajKvizAkt extends AppCompatActivity implements KvizoviAkt.ILista
         }
     }
 
-    private class DodajKategorijeUBazu extends AsyncTask<String, Integer, Void> {
+    private class DodajUBazu extends AsyncTask<String, Integer, Void> {
 
-        protected  Void doInBackground(String... urls) {//prvi param kolekcija drugi id dokumenta
+        protected  Void doInBackground(String... urls) {//prvi param kolekcija drugi sta ubacujemo
             String url1;
-            if(urls.length == 1)
-                url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "?access_token=" + token;
-            else
-                url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "/" + urls[1] + "?access_token=" + token;
+            url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "?documentId=" + urls[1] + "&access_token=" + token;
+            if(svrha.equals("izmjena") && urls[0].equals("Kvizovi")) url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "/" + urls[1] + "?access_token=" + token;
             URL url;
             try {
                 url = new URL(url1);
                 HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
                 urlConnection.setDoInput(true);
-                urlConnection.setRequestMethod("POST");
+                if(svrha.equals("izmjena") && urls[0].equals("Kvizovi"))
+                    urlConnection.setRequestMethod("PATCH");
+                else  urlConnection.setRequestMethod("POST");
                 urlConnection.setRequestProperty("Content-Type", "application/json");
                 urlConnection.setRequestProperty("Accept", "application/json");
+                String dokument = "";
+                if(urls[0].equalsIgnoreCase("Kategorije")) {
+                    dokument = "{ \"fields\": { \"idIkonice\": { \"integerValue\": \"" + dodanaKategorija.getId() + "\"}, \"naziv\": { \"stringValue\": \"" + dodanaKategorija.getNaziv() + "\"}}}";
+                } else if(urls[0].equalsIgnoreCase("Kvizovi")) {
+                    int i = 0;
+                    dokument = "{ \"fields\": { \"pitanja\": { \"arrayValue\": { \"values\": [" ;
+                    for(Pitanje p : kviz.getPitanja()) {
+                        if(i < kviz.getPitanja().size() - 2)
+                            dokument += "{ \"stringValue\": \"" + p.getId() + "\"}, ";
+                        else if(i == kviz.getPitanja().size() - 2)
+                            dokument += "{ \"stringValue\": \"" + p.getId() + "\"} ";
+                        i++;
+                    }
+                    dokument += "]}}, \"naziv\": { \"stringValue\": \"" + kviz.getNaziv() + "\"}, \"idKategorije\": { \"stringValue\": \"" + kviz.getKategorija().getIdUBazi() + "\"}}}";
+                } else if(urls[0].equalsIgnoreCase("Pitanja")) {
+                    String[] odgovori = urls[3].split(",");
+                    int i = 0;
+                    dokument = "{ \"fields\": { \"naziv\": { \"stringValue\": \"" + urls[2] + "\"}, \"odgovori\": { \"arrayValue\": { \"values\": [" ;
+                    for(String p : odgovori) {
+                        if(i++ != odgovori.length - 1)
+                            dokument += "{ \"stringValue\": \"" + p + "\"}, ";
+                        else dokument += "{ \"stringValue\": \"" + p + "\"} ";
+                    }
+                    dokument += "]}}, \"indexTacnog\": { \"integerValue\": \"" + urls[4] + "\"}}}";
+                }
 
-                String dokument = "{ \"fields\": { \"idIkonice\": { \"integerValue\": \"" + dodanaKategorija.getId() +"\"}, \"naziv\": { \"stringValue\": \"" + dodanaKategorija.getNaziv() + "\"}}}";
-                try(OutputStream os = urlConnection.getOutputStream()) {
+                try (OutputStream os = urlConnection.getOutputStream()) {
                     byte[] input = dokument.getBytes("utf-8");
                     os.write(input, 0, input.length);
                 }
+
                 int code = urlConnection.getResponseCode();
                 InputStream odgovor = urlConnection.getInputStream();
                 try(BufferedReader br = new BufferedReader(new InputStreamReader(odgovor, "utf-8"))) {

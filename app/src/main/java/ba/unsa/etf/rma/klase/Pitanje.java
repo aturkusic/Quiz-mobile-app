@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 
 public class Pitanje implements Serializable {
     private String id;
@@ -80,5 +81,15 @@ public class Pitanje implements Serializable {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public int getIndexTacnog(String tacanOdgovor) {
+        return odgovori.indexOf(tacanOdgovor);
+    }
+
+    @Override
+    public int hashCode() {
+        id = String.valueOf(Objects.hash(naziv));
+        return Integer.parseInt(id);
     }
 }

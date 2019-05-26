@@ -2,6 +2,7 @@ package ba.unsa.etf.rma.klase;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class Kviz implements Serializable {
     private String id;
@@ -63,5 +64,11 @@ public class Kviz implements Serializable {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    @Override
+    public int hashCode() {
+        id = String.valueOf(Objects.hash(naziv));
+        return Integer.parseInt(id);
     }
 }

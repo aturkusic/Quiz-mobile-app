@@ -4,6 +4,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public class Kategorija implements Serializable {
 
@@ -68,4 +69,9 @@ public class Kategorija implements Serializable {
 
     }
 
+    @Override
+    public int hashCode() {
+        idUBazi = String.valueOf(Objects.hash(naziv));
+        return Integer.parseInt(idUBazi);
+    }
 }
