@@ -571,8 +571,8 @@ public class DodajKvizAkt extends AppCompatActivity implements KvizoviAkt.ILista
                 int indexTacnog = Integer.parseInt(kviz.getJSONObject("indexTacnog").getString("integerValue"));
                 ArrayList<String> odgovori = new ArrayList<String>();
                 JSONArray jArray = kviz.getJSONObject("odgovori").getJSONObject("arrayValue").getJSONArray("values");
-                for (int j = 0; i < jArray.length();i++){
-                    odgovori.add(jArray.getJSONObject(i).getString("stringValue"));
+                for (int j = 0; j < jArray.length(); j++){
+                    odgovori.add(jArray.getJSONObject(j).getString("stringValue"));
                 }
                 Pitanje pitanje = new Pitanje(id, naziv, naziv, odgovori, odgovori.get(indexTacnog));
                 pitanjaIzBaze.add(pitanje);
