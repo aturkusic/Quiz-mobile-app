@@ -40,13 +40,14 @@ import java.net.URL;
 import java.util.ArrayList;
 
 import ba.unsa.etf.rma.adapteri.SpinerAdapter;
+import ba.unsa.etf.rma.klase.Interfejsi;
 import ba.unsa.etf.rma.klase.Kategorija;
 import ba.unsa.etf.rma.klase.Kviz;
 import ba.unsa.etf.rma.adapteri.ListaPitanjaAdapter;
 import ba.unsa.etf.rma.klase.Pitanje;
 import ba.unsa.etf.rma.R;
 
-public class DodajKvizAkt extends AppCompatActivity implements KvizoviAkt.IListaMogucihAsyncResponse {
+public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.IListaMogucihAsyncResponse {
     private static final int SECOND_ACTIVITY_REQUEST_CODE = 0;
     private static final int SECOND_ACTIVITY_REQUEST_CODE1 = 1;
     private DobaviMogucaPitanja dobaviMogucaPitanjaAsync = new DobaviMogucaPitanja();
@@ -263,6 +264,11 @@ public class DodajKvizAkt extends AppCompatActivity implements KvizoviAkt.ILista
                 spinner.setSelection(kategorije.size() - 2);
             }
         } else if(requestCode == READ_REQUEST_CODE) {//dodavanje kviza iz txt datoteke
+            pitanja.clear();
+            adapter.notifyDataSetChanged();
+            Pitanje dodajPitanje = new Pitanje();
+            dodajPitanje.setNaziv("Dodaj Pitanje");
+            pitanja.add(dodajPitanje);
             Uri uri = null;
             if (data != null) {
                 uri = data.getData();
@@ -304,6 +310,7 @@ public class DodajKvizAkt extends AppCompatActivity implements KvizoviAkt.ILista
                                             odgovori += o + ",";
                                         else odgovori += o;
                                     }
+                                    listaMogucih.remove(pitanje);
                                     new DodajUBazu().execute("Pitanja", String.valueOf(pitanje.hashCode()), pitanje.getNaziv(), odgovori,
                                             String.valueOf(pitanje.getIndexTacnog(pitanje.getTacanOdgovor())));
                                     adapter.notifyDataSetChanged();
@@ -424,11 +431,6 @@ public class DodajKvizAkt extends AppCompatActivity implements KvizoviAkt.ILista
         this.kviz = kviz;
     }
 
-    @Override
-    public void processFinish(ArrayList<Pitanje> output) { // metoda interfejsa za komunikaciju izmedju asynctask i aktivnosti
-        listaMogucih.addAll(output);
-        adapterMogucihPitanja.notifyDataSetChanged();
-    }
 
     private class DobaviTokenKlasa extends AsyncTask<URL, Integer, String> {
         protected String doInBackground(URL... urls) {
@@ -451,7 +453,7 @@ public class DodajKvizAkt extends AppCompatActivity implements KvizoviAkt.ILista
     }
 
     private class DobaviMogucaPitanja extends AsyncTask<String, Integer, ArrayList<Pitanje>> {
-        public KvizoviAkt.IListaMogucihAsyncResponse delegat = null;
+        public Interfejsi.IListaMogucihAsyncResponse delegat = null;
         protected  ArrayList<Pitanje> doInBackground(String... urls) {//prvi param kolekcija drugi id dokumenta
             String url1;
             ArrayList<Pitanje> listaMogucih = new ArrayList<>();
@@ -491,6 +493,12 @@ public class DodajKvizAkt extends AppCompatActivity implements KvizoviAkt.ILista
         protected void onPostExecute( ArrayList<Pitanje> lista) {
             delegat.processFinish(lista);
         }
+    }
+
+    @Override
+    public void processFinish(ArrayList<Pitanje> output) { // metoda interfejsa za komunikaciju izmedju asynctask i aktivnosti
+        listaMogucih.addAll(output);
+        adapterMogucihPitanja.notifyDataSetChanged();
     }
 
     private class DodajUBazu extends AsyncTask<String, Integer, Void> {
@@ -601,5 +609,7 @@ public class DodajKvizAkt extends AppCompatActivity implements KvizoviAkt.ILista
         }
         return sb.toString();
     }
+
+
 
 }

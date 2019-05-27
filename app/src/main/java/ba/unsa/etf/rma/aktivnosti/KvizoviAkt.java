@@ -4,6 +4,7 @@ package ba.unsa.etf.rma.aktivnosti;
 import android.app.FragmentManager;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -12,10 +13,24 @@ import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.Spinner;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.common.collect.Lists;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 
 import ba.unsa.etf.rma.fragmenti.DetailFrag;
 import ba.unsa.etf.rma.fragmenti.ListaFrag;
+import ba.unsa.etf.rma.klase.Interfejsi;
 import ba.unsa.etf.rma.klase.Kategorija;
 import ba.unsa.etf.rma.klase.Kviz;
 import ba.unsa.etf.rma.adapteri.ListaAdapter;
@@ -23,7 +38,7 @@ import ba.unsa.etf.rma.klase.Pitanje;
 import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.adapteri.SpinerAdapter;
 
-public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomunikacijuSaBaznom, ListaFrag.Filtriranje {
+public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomunikacijuSaBaznom, ListaFrag.Filtriranje, Interfejsi.IDobaviKvizove {
     private static final int SECOND_ACTIVITY_REQUEST_CODE = 0;
     public  KvizoviAkt GlavnaKlasa = null;
     public ArrayList<Kviz> kvizovi = new ArrayList<>();
@@ -277,9 +292,65 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
             listaFrag.azurirajKategorije(new ArrayList<>(kategorije));
         }
     }
-    public interface IListaMogucihAsyncResponse {
-        void processFinish(ArrayList<Pitanje> output);
+
+
+    private class DobaviKvizove extends AsyncTask<String, Integer, ArrayList<Kviz>> {
+        public Interfejsi.IDobaviKvizove delegat = null;
+        protected  ArrayList<Kviz> doInBackground(String... urls) {//prvi param kolekcija drugi id dokumenta
+            InputStream is = getResources().openRawResource(R.raw.secret);
+            GoogleCredential credentials = null;
+            try {
+                credentials = GoogleCredential.fromStream(is).createScoped(Lists.newArrayList("https://www.googleapis.com/auth/datastore"));
+                credentials.refreshToken();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            String TOKEN = credentials.getAccessToken();
+            String url1;
+            ArrayList<Kviz> listaKvizova = new ArrayList<>();
+            if(urls.length == 1)
+                url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "?access_token=" + TOKEN;
+            else
+                url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "/" + urls[1] + "?access_token=" + TOKEN;
+            URL url;
+            try {
+                url = new URL(url1);
+                HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
+                InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+                String rezultat = DodajKvizAkt.convertStreamToString(in);
+                JSONObject jo = null;
+                jo = new JSONObject(rezultat);
+                JSONArray items = new JSONArray();
+                if(urls[0].equalsIgnoreCase("Kvizovi")) {
+                    items = jo.getJSONArray("documents");
+                    ArrayList<Kviz> kvizovi = ucitajSveKvizoveIzBaze(items);
+
+                }
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }  catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return listaKvizova;
+        }
+
+        @Override
+        protected void onPostExecute( ArrayList<Kviz> lista) {
+            delegat.processFinish(lista);
+        }
     }
+
+    private ArrayList<Kviz> ucitajSveKvizoveIzBaze(JSONArray items) {
+        return null;
+    }
+
+    @Override
+    public void processFinish(ArrayList<Kviz> output) {
+
+    }
+
 
 
 }
