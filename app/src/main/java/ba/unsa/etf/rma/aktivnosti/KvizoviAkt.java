@@ -27,6 +27,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
 
 import ba.unsa.etf.rma.fragmenti.DetailFrag;
 import ba.unsa.etf.rma.fragmenti.ListaFrag;
@@ -51,6 +52,9 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
     private Boolean siriL = false;
     private ListaFrag listaFrag;
     private DetailFrag detailFrag;
+    private SpinerAdapter adapterSpinner;
+    private ArrayList<Pitanje> listaSvaPitanja = new ArrayList<>();
+    private Kategorija kategorijaKvizaKojiSeDodaje;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,7 +79,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
             adapter = new ListaAdapter(GlavnaKlasa, kvizovi, res);
             list.setAdapter(adapter);
 
-            SpinerAdapter adapterSpinner = new SpinerAdapter(GlavnaKlasa, kategorije);
+            adapterSpinner = new SpinerAdapter(GlavnaKlasa, kategorije);
             spinner.setAdapter(adapterSpinner);
 
 
@@ -94,6 +98,14 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
                     return dodajIzmijeniKviz(position);
                 }
             });
+
+            DobaviIzBaze dobaviIzBaze = new DobaviIzBaze();
+            dobaviIzBaze.delegat = this;
+            dobaviIzBaze.execute("Kategorije");
+
+            DobaviIzBaze dobaviIzBaze1 = new DobaviIzBaze();
+            dobaviIzBaze1.delegat = this;
+            dobaviIzBaze1.execute("Kvizovi");
 
             spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
@@ -294,9 +306,9 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
     }
 
 
-    private class DobaviKvizove extends AsyncTask<String, Integer, ArrayList<Kviz>> {
+    private class DobaviIzBaze extends AsyncTask<String, Integer, ArrayList<?>> {
         public Interfejsi.IDobaviKvizove delegat = null;
-        protected  ArrayList<Kviz> doInBackground(String... urls) {//prvi param kolekcija drugi id dokumenta
+        protected  ArrayList<?> doInBackground(String... urls) {//prvi param kolekcija drugi id dokumenta
             InputStream is = getResources().openRawResource(R.raw.secret);
             GoogleCredential credentials = null;
             try {
@@ -307,7 +319,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
             }
             String TOKEN = credentials.getAccessToken();
             String url1;
-            ArrayList<Kviz> listaKvizova = new ArrayList<>();
+            ArrayList<?> lista = new ArrayList<>();
             if(urls.length == 1)
                 url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "?access_token=" + TOKEN;
             else
@@ -323,8 +335,16 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
                 JSONArray items = new JSONArray();
                 if(urls[0].equalsIgnoreCase("Kvizovi")) {
                     items = jo.getJSONArray("documents");
-                    ArrayList<Kviz> kvizovi = ucitajSveKvizoveIzBaze(items);
+                   lista = ucitajSveKvizoveIzBaze(items);
 
+                } else if(urls.length == 3 && urls[2].equalsIgnoreCase("Kategorija")) {
+                    kategorijaKvizaKojiSeDodaje = ucitajKategoriju(jo);
+                } else if(urls[0].equalsIgnoreCase("Kategorije")) {
+                    items = jo.getJSONArray("documents");
+                    lista = ucitajSveKategorijeIzBaze(items);
+                } else if(urls[0].equalsIgnoreCase("Pitanja")) {
+                    items = jo.getJSONArray("documents");
+                    listaSvaPitanja = DodajKvizAkt.ucitajSvaPitanjaIzBaze(items);
                 }
             } catch (MalformedURLException e) {
                 e.printStackTrace();
@@ -333,22 +353,94 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
             }  catch (JSONException e) {
                 e.printStackTrace();
             }
-            return listaKvizova;
+            return lista;
         }
 
         @Override
-        protected void onPostExecute( ArrayList<Kviz> lista) {
-            delegat.processFinish(lista);
+        protected void onPostExecute( ArrayList<?> lista) {
+            if(lista.size() != 0)
+                delegat.processFinish(lista);
         }
     }
 
     private ArrayList<Kviz> ucitajSveKvizoveIzBaze(JSONArray items) {
-        return null;
+        ArrayList<Kviz> kvizoviIzBaze = new ArrayList<>();
+        try {
+            for(int i = 0; i < items.length(); i++) {
+                JSONObject name = null;
+                name = items.getJSONObject(i);
+                JSONObject kviz = null;
+                kviz = name.getJSONObject("fields");
+                String naziv = kviz.getJSONObject("naziv").getString("stringValue");
+                String idKategorije = kviz.getJSONObject("idKategorije").getString("stringValue");
+                ArrayList<String> pitanjaIdevi = new ArrayList<String>();
+                JSONArray jArray = kviz.getJSONObject("pitanja").getJSONObject("arrayValue").getJSONArray("values");
+                for (int j = 0; j < jArray.length(); j++){
+                    pitanjaIdevi.add(jArray.getJSONObject(j).getString("stringValue"));
+                }
+                String[] tmp = {"Kategorije", idKategorije, "Kategorija"};
+                new DobaviIzBaze().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, tmp).get();
+                new DobaviIzBaze().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,"Pitanja").get();
+                kvizoviIzBaze.add(new Kviz(naziv, dajOdgovarajucaPitanja(pitanjaIdevi), kategorijaKvizaKojiSeDodaje));
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        return kvizoviIzBaze;
+    }
+
+    private ArrayList<Pitanje> dajOdgovarajucaPitanja(ArrayList<String> pitanjaIdevi) {
+        ArrayList<Pitanje> pitanja = new ArrayList<>();
+        for(Pitanje p : listaSvaPitanja)
+            if(pitanjaIdevi.contains(p.getId()))
+                pitanja.add(p);
+            return  pitanja;
     }
 
     @Override
-    public void processFinish(ArrayList<Kviz> output) {
+    public void processFinish(ArrayList<?> output) {
+        if(output.get(0).getClass() == Kategorija.class) {
+            ArrayList<Kategorija> kategorijas = (ArrayList<Kategorija>) output;
+            kategorije.addAll(kategorijas);
+            adapterSpinner.notifyDataSetChanged();
+        } else {
+            ArrayList<Kviz> kviz = (ArrayList<Kviz>) output;
+            kvizovi.addAll(kvizovi.size() - 1, kviz);
+            adapter.notifyDataSetChanged();
+        }
+    }
 
+    public static ArrayList<Kategorija> ucitajSveKategorijeIzBaze(JSONArray items) {
+        ArrayList<Kategorija> kategorijeIzBaze = new ArrayList<>();
+        try {
+            for(int i = 0; i < items.length(); i++) {
+                JSONObject name = null;
+                name = items.getJSONObject(i);
+                kategorijeIzBaze.add(ucitajKategoriju(name));
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return kategorijeIzBaze;
+    }
+
+    public static Kategorija ucitajKategoriju(JSONObject name) {
+        JSONObject kviz = null;
+        try {
+            kviz = name.getJSONObject("fields");
+            String naziv = kviz.getJSONObject("naziv").getString("stringValue");
+            String idIkonice = kviz.getJSONObject("idIkonice").getString("integerValue");
+            Kategorija kategorija = new Kategorija( naziv, idIkonice);
+            kategorija.hashCode();
+        return  kategorija;
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
 

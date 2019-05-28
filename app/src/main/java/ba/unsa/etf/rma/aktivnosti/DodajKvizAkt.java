@@ -9,6 +9,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Looper;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -37,6 +38,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 
 import ba.unsa.etf.rma.adapteri.SpinerAdapter;
@@ -70,6 +72,8 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
     EditText imeKviza;
     Button dugme;
     Button importujBtn;
+    static final String AB = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    static SecureRandom rnd = new SecureRandom();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -194,8 +198,9 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
                 kviz = new Kviz(id, imeKviza.getText().toString(), pitanja, kategorija);
                 if(svrha.equalsIgnoreCase("izmjena"))
                     new DodajUBazu().execute("Kvizovi", kviz.getId()); // izmjena u bazi
-                else
+                else {
                     new DodajUBazu().execute("Kvizovi", String.valueOf(kviz.hashCode())); // dodajem u bazu
+                }
                 Intent povratni = new Intent();
                 povratni.putExtra("povratniKviz", kviz);
                 povratni.putExtra("dodaneKategorije", kategorije);
@@ -245,7 +250,7 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
                 Pitanje pitanje = (Pitanje) data.getSerializableExtra("povratnoPitanje");
                 String odgovori = "";
                 int j = 0;
-                for(String o : pitanje.getOdgovori()) {// odgovore stavljam u string kako bih mogao dodat u bazu
+                for(String o : pitanje.getOdgovori()) {// odgovore stavljam u stri  ng kako bih mogao dodat u bazu
                     if (j != pitanje.getOdgovori().size() - 1)
                         odgovori += o + ",";
                     else odgovori += o;
@@ -397,7 +402,7 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
         return lines;
     }
 
-    private void dialogAkcija(String poruka) {
+    public void dialogAkcija(String poruka) {
         AlertDialog alertDialog = new AlertDialog.Builder(DodajKvizAkt.this).create();
         alertDialog.setTitle("Alert");
         alertDialog.setMessage(poruka);
@@ -567,14 +572,13 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
 
     }
 
-    private ArrayList<Pitanje> ucitajSvaPitanjaIzBaze(JSONArray items) {
+    public static ArrayList<Pitanje> ucitajSvaPitanjaIzBaze(JSONArray items) {
         ArrayList<Pitanje> pitanjaIzBaze = new ArrayList<>();
          try {
             for(int i = 0; i < items.length(); i++) {
                 JSONObject name = null;
                 name = items.getJSONObject(i);
                 JSONObject kviz = name.getJSONObject("fields");
-                String id = name.getString("name");
                 String naziv = kviz.getJSONObject("naziv").getString("stringValue");
                 int indexTacnog = Integer.parseInt(kviz.getJSONObject("indexTacnog").getString("integerValue"));
                 ArrayList<String> odgovori = new ArrayList<String>();
@@ -582,7 +586,8 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
                 for (int j = 0; j < jArray.length(); j++){
                     odgovori.add(jArray.getJSONObject(j).getString("stringValue"));
                 }
-                Pitanje pitanje = new Pitanje(id, naziv, naziv, odgovori, odgovori.get(indexTacnog));
+                Pitanje pitanje = new Pitanje(naziv, naziv, odgovori, odgovori.get(indexTacnog));
+                pitanje.hashCode();
                 pitanjaIzBaze.add(pitanje);
             }
         } catch (JSONException e) {
@@ -610,6 +615,11 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
         return sb.toString();
     }
 
-
+    String randomString( int len ){
+        StringBuilder sb = new StringBuilder( len );
+        for( int i = 0; i < len; i++ )
+            sb.append( AB.charAt( rnd.nextInt(AB.length()) ) );
+        return sb.toString();
+    }
 
 }

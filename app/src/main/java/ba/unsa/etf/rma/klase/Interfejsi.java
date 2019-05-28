@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 public abstract class Interfejsi {
     public interface IDobaviKvizove {
-        void processFinish(ArrayList<Kviz> output);
+        void processFinish(ArrayList<?> output);
     }
 
     public interface IListaMogucihAsyncResponse {

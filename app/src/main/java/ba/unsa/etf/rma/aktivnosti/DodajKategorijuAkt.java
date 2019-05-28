@@ -1,6 +1,8 @@
 package ba.unsa.etf.rma.aktivnosti;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.AsyncTask;
@@ -33,13 +35,15 @@ import ba.unsa.etf.rma.klase.Kategorija;
 import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.klase.Pitanje;
 
+import static ba.unsa.etf.rma.aktivnosti.KvizoviAkt.ucitajSveKategorijeIzBaze;
+
 public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.Callback {
 
     private Icon[] selectedIcons;
     private EditText imeKategorije;
     private EditText imeIkone;
     private ArrayList<Kategorija> kategorije;
-    private boolean postojiUBazi = false;
+    private boolean postojiUBazi;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,7 +82,16 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
                     if (k.getNaziv().equalsIgnoreCase(imeKategorije.getText().toString())) {
                         imeKategorije.setBackgroundColor(Color.RED);
                         imeKategorije.setHint("Odaberite drugo ime");
-                        Toast.makeText(DodajKategorijuAkt.this, "“Unesena kategorija već postoji!", Toast.LENGTH_LONG).show();
+                        AlertDialog alertDialog = new AlertDialog.Builder(DodajKategorijuAkt.this).create();
+                        alertDialog.setTitle("Alert");
+                        alertDialog.setMessage("Unesena kategorija vec postoji!");
+                        alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.dismiss();
+                                    }
+                                });
+                        alertDialog.show();
                         return;
                     }
                 }
@@ -152,24 +165,6 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
             return null;
         }
 
-    }
-    private ArrayList<Kategorija> ucitajSveKategorijeIzBaze(JSONArray items) {
-        ArrayList<Kategorija> kategorijeIzBaze = new ArrayList<>();
-        try {
-            for(int i = 0; i < items.length(); i++) {
-                JSONObject name = null;
-                name = items.getJSONObject(i);
-                JSONObject kviz = name.getJSONObject("fields");
-                String id = name.getString("name");
-                String naziv = kviz.getJSONObject("naziv").getString("stringValue");
-                String idIkonice = kviz.getJSONObject("idIkonice").getString("integerValue");
-                Kategorija kategorija = new Kategorija(id, naziv, idIkonice);
-                kategorijeIzBaze.add(kategorija);
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return kategorijeIzBaze;
     }
 
 
