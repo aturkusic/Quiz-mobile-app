@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -23,8 +24,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -35,6 +39,7 @@ import ba.unsa.etf.rma.klase.Kategorija;
 import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.klase.Pitanje;
 
+import static ba.unsa.etf.rma.aktivnosti.KvizoviAkt.ucitajKategoriju;
 import static ba.unsa.etf.rma.aktivnosti.KvizoviAkt.ucitajSveKategorijeIzBaze;
 
 public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.Callback {
@@ -44,6 +49,7 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
     private EditText imeIkone;
     private ArrayList<Kategorija> kategorije;
     private boolean postojiUBazi;
+    private Kategorija kategorijaZaDodat;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,25 +101,12 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
                         return;
                     }
                 }
-                try {
-                    new DobaviKategorije().execute("Kategorije").get();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                if(postojiUBazi) {
-                    Toast.makeText(DodajKategorijuAkt.this, "“Unesena kategorija već postoji!", Toast.LENGTH_LONG).show();
-                    postojiUBazi = false;
-                    return;
-                }
+                kategorijaZaDodat = new Kategorija(imeKategorije.getText().toString(), imeIkone.getText().toString());
+                kategorijaZaDodat.hashCode();
+                new DobaviKategorije().execute("Kategorije", kategorijaZaDodat.getIdUBazi());
                 imeKategorije.setHint("");
                 imeKategorije.setBackgroundColor(0x00000000);
                 imeIkone.setBackgroundColor(0x00000000);
-                Intent povratni = new Intent();
-                povratni.putExtra("povratnaKategorija", new Kategorija(imeKategorije.getText().toString(), imeIkone.getText().toString()));
-                setResult(Activity.RESULT_OK, povratni);
-                finish();
             }
         });
     }
@@ -124,47 +117,48 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
         imeIkone.setText(Integer.toString(selectedIcons[0].getId()));
     }
 
-    private class DobaviKategorije extends AsyncTask<String, Integer, Void> {
-        protected Void doInBackground(String... urls) {
+    private class DobaviKategorije extends AsyncTask<String, Integer,  ArrayList<Kategorija>> {
+        protected ArrayList<Kategorija> doInBackground(String... urls) {
+            ArrayList<Kategorija> listaKategorija = new ArrayList<>();
             try {
                 InputStream is = getResources().openRawResource(R.raw.secret);
                 GoogleCredential credentials = null;
                 credentials = GoogleCredential.fromStream(is).createScoped(Lists.newArrayList("https://www.googleapis.com/auth/datastore"));
                 credentials.refreshToken();
                 String TOKEN = credentials.getAccessToken();
-                String url1;
-                ArrayList<Kategorija> listaKategorija = new ArrayList<>();
-                if (urls.length == 1)
-                    url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "?access_token=" + TOKEN;
-                else
-                    url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "/" + urls[1] + "?access_token=" + TOKEN;
-                URL url;
-                url = new URL(url1);
+                listaKategorija = new ArrayList<>();
+                String url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "/" + kategorijaZaDodat.getIdUBazi() + "?access_token=" + TOKEN;
+                URL url = new URL(url1);
                 HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
                 InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-                String rezultat = DodajKvizAkt.convertStreamToString(in);
-                JSONObject jo = null;
-                jo = new JSONObject(rezultat);
-                JSONArray items = new JSONArray();
-                items = jo.getJSONArray("documents");
-                listaKategorija = ucitajSveKategorijeIzBaze(items);
-                for(Kategorija k : listaKategorija) {
-                    if(k.getNaziv().equalsIgnoreCase(imeKategorije.getText().toString())) {
-                        postojiUBazi = true;
-                        return null;
-                    }
-                }
-
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             } catch (IOException e) {
-                e.printStackTrace();
-            } catch (JSONException e) {
-                e.printStackTrace();
+                return null;
             }
-            return null;
+            return listaKategorija;
         }
 
+        @Override
+        protected void onPostExecute(ArrayList<Kategorija> aVoid) {
+            if(aVoid == null) {
+                Intent povratni = new Intent();
+                povratni.putExtra("povratnaKategorija", kategorijaZaDodat);
+                setResult(Activity.RESULT_OK, povratni);
+                finish();
+            } else {
+                AlertDialog alertDialog = new AlertDialog.Builder(DodajKategorijuAkt.this).create();
+                alertDialog.setTitle("Alert");
+                alertDialog.setMessage("Unesena kategorija vec postoji!");
+                alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+                alertDialog.show();
+            }
+        }
     }
 
 

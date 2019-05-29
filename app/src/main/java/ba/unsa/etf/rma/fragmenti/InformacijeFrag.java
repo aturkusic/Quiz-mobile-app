@@ -40,7 +40,9 @@ public class InformacijeFrag extends Fragment {
             brojTacnih.setText("0");
             String preostali = "";
             if(kviz.getPitanja().size() == 1) preostali = "0";
-            else preostali = Integer.toString(kviz.getPitanja().size() - 2);
+            else if(kviz.getPitanja().get(kviz.getPitanja().size() - 1).getNaziv().equalsIgnoreCase("Dodaj pitanje"))
+                preostali = Integer.toString(kviz.getPitanja().size() - 2);
+            else preostali = Integer.toString(kviz.getPitanja().size() - 1);
             brojPreostalih.setText(preostali);
             postotakTacnih.setText("0.0");
         }

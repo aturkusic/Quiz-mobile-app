@@ -7,6 +7,7 @@ import android.content.res.Resources;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.FrameLayout;
@@ -16,13 +17,17 @@ import android.widget.Spinner;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.common.collect.Lists;
 
+import org.apache.http.client.methods.HttpPost;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -45,6 +50,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
     public ArrayList<Kviz> kvizovi = new ArrayList<>();
     public ArrayList<Kategorija> kategorije = new ArrayList<>();
     private Kategorija svi;
+    private Kategorija odabranaKategorijaUSpineru;
     private ListaAdapter adapter;
     private boolean daLiJeIzmjena = false;
     private int pozicija = -1;
@@ -103,20 +109,19 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
             dobaviIzBaze.delegat = this;
             dobaviIzBaze.execute("Kategorije");
 
-            DobaviIzBaze dobaviIzBaze1 = new DobaviIzBaze();
-            dobaviIzBaze1.delegat = this;
-            dobaviIzBaze1.execute("Kvizovi");
+//            DobaviIzBaze dobaviIzBaze1 = new DobaviIzBaze();
+//            dobaviIzBaze1.delegat = this;
+//            dobaviIzBaze1.execute("Kvizovi");
+
+            odabranaKategorijaUSpineru = new Kategorija("glupost", "17");
+            odabranaKategorijaUSpineru.hashCode();
+            new DobaviSveKvizovePoKategoriji().execute();
 
             spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
                 public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                    Kategorija cat = (Kategorija) spinner.getSelectedItem();
-                    if (!cat.getNaziv().equals("Svi")) {
-                        ((ListaAdapter) adapter).getFilter().filter(kategorije.get(position).getNaziv());
-                    } else {
-                        ((ListaAdapter) adapter).setKat(svi);
-                        ((ListaAdapter) adapter).getFilter().filter(kategorije.get(position).getNaziv());
-                    }
+                   odabranaKategorijaUSpineru =  (Kategorija) spinner.getSelectedItem();
+                   new DobaviSveKvizovePoKategoriji().execute();
                 }
 
                 @Override
@@ -322,8 +327,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
             ArrayList<?> lista = new ArrayList<>();
             if(urls.length == 1)
                 url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "?access_token=" + TOKEN;
-            else
-                url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "/" + urls[1] + "?access_token=" + TOKEN;
+            else url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "/" + urls[1] + "?access_token=" + TOKEN;
             URL url;
             try {
                 url = new URL(url1);
@@ -335,8 +339,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
                 JSONArray items = new JSONArray();
                 if(urls[0].equalsIgnoreCase("Kvizovi")) {
                     items = jo.getJSONArray("documents");
-                   lista = ucitajSveKvizoveIzBaze(items);
-
+                    lista = ucitajSveKvizoveIzBaze(items);
                 } else if(urls.length == 3 && urls[2].equalsIgnoreCase("Kategorija")) {
                     kategorijaKvizaKojiSeDodaje = ucitajKategoriju(jo);
                 } else if(urls[0].equalsIgnoreCase("Kategorije")) {
@@ -361,6 +364,112 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
             if(lista.size() != 0)
                 delegat.processFinish(lista);
         }
+    }
+
+    private class DobaviSveKvizovePoKategoriji extends AsyncTask<String, Integer, ArrayList<Kviz>> {
+
+        protected  ArrayList<Kviz> doInBackground(String... urls) {
+            InputStream is = getResources().openRawResource(R.raw.secret);
+            GoogleCredential credentials = null;
+            try {
+                credentials = GoogleCredential.fromStream(is).createScoped(Lists.newArrayList("https://www.googleapis.com/auth/datastore"));
+                credentials.refreshToken();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            String TOKEN = credentials.getAccessToken();
+            String query = "{\n" +
+                    "    \"structuredQuery\": {\n" +
+                    "        \"where\" : {\n" +
+                    "            \"fieldFilter\" : { \n" +
+                    "                \"field\": {\"fieldPath\": \"idKategorije\"}, \n" +
+                    "                \"op\":\"EQUAL\", \n" +
+                    "                \"value\": {\"stringValue\": \"" + odabranaKategorijaUSpineru.getIdUBazi() + "\"}\n" +
+                    "            }\n" +
+                    "        },\n" +
+                    "        \"select\": { \"fields\": [ {\"fieldPath\": \"idKategorije\"}, {\"fieldPath\": \"naziv\"}, {\"fieldPath\": \"pitanja\"}] },\n" +
+                    "        \"from\": [{\"collectionId\": \"Kvizovi\"}],\n" +
+                    "       \"limit\": 1000 \n" +
+                    "    }\n" +
+                    "}";
+            String url1  = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents:runQuery?access_token=" + TOKEN;
+            ArrayList<Kviz> kvizovi = new ArrayList<>();
+            try {
+               URL url = new URL(url1);
+                HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
+                urlConnection.setDoInput(true);
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setRequestProperty("Content-Type", "application/json");
+                urlConnection.setRequestProperty("Accept", "application/json");
+                try (OutputStream os = urlConnection.getOutputStream()) {
+                    byte[] input = query.getBytes("utf-8");
+                    os.write(input, 0, input.length);
+                }
+
+                int code = urlConnection.getResponseCode();
+                InputStream in = urlConnection.getInputStream();
+                String rezultat = DodajKvizAkt.convertStreamToString(in);
+                rezultat = "{ \"documents\": " + rezultat + "}";
+                JSONObject jo = null;
+                jo = new JSONObject(rezultat);
+                JSONArray items = new JSONArray();
+                items = jo.getJSONArray("documents");
+                kvizovi = ucitajKvizoveOdabraneKategorije(items);
+
+                try(BufferedReader br = new BufferedReader(new InputStreamReader(in, "utf-8"))) {
+                    StringBuilder response = new StringBuilder();
+                    String responseLine = null;
+                    while ((responseLine = br.readLine()) != null) {
+                        response.append(responseLine.trim());
+                    }
+                    Log.d("ODGOVOR", response.toString());
+                }
+            }  catch (IOException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            return kvizovi ;
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<Kviz> kvizs) {
+            kvizovi.clear();
+            dodajAddKvizNaKraj();
+            kvizovi.addAll(kvizovi.size() - 1, kvizs);
+            adapter.notifyDataSetChanged();
+        }
+    }
+
+    private ArrayList<Kviz> ucitajKvizoveOdabraneKategorije(JSONArray items) {
+        ArrayList<Kviz> kvizoviIzBaze = new ArrayList<>();
+        try {
+            for(int i = 0; i < items.length(); i++) {
+                JSONObject name = items.getJSONObject(i);;
+                JSONObject dokument = name.getJSONObject("document");
+                JSONObject kviz = dokument.getJSONObject("fields");
+                String naziv = kviz.getJSONObject("naziv").getString("stringValue");
+                String idKategorije = kviz.getJSONObject("idKategorije").getString("stringValue");
+                ArrayList<String> pitanjaIdevi = new ArrayList<String>();
+                JSONArray jArray = kviz.getJSONObject("pitanja").getJSONObject("arrayValue").getJSONArray("values");
+                for (int j = 0; j < jArray.length(); j++){
+                    pitanjaIdevi.add(jArray.getJSONObject(j).getString("stringValue"));
+                }
+                String[] tmp = {"Kategorije", idKategorije, "Kategorija"};
+                new DobaviIzBaze().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, tmp).get();
+                new DobaviIzBaze().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,"Pitanja").get();
+                kvizoviIzBaze.add(new Kviz(naziv, dajOdgovarajucaPitanja(pitanjaIdevi), kategorijaKvizaKojiSeDodaje));
+
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        return kvizoviIzBaze;
     }
 
     private ArrayList<Kviz> ucitajSveKvizoveIzBaze(JSONArray items) {
