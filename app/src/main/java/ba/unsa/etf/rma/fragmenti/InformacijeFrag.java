@@ -39,8 +39,8 @@ public class InformacijeFrag extends Fragment {
             nazivKviza.setText(kviz.getNaziv());
             brojTacnih.setText("0");
             String preostali = "";
-            if(kviz.getPitanja().size() == 1) preostali = "0";
-            else if(kviz.getPitanja().get(kviz.getPitanja().size() - 1).getNaziv().equalsIgnoreCase("Dodaj pitanje"))
+            if(kviz.getPitanja().size() == 1 || kviz.getPitanja().size() == 0) preostali = "0";
+            else if(kviz.getPitanja().size() != 0 && kviz.getPitanja().get(kviz.getPitanja().size() - 1).getNaziv().equalsIgnoreCase("Dodaj pitanje"))
                 preostali = Integer.toString(kviz.getPitanja().size() - 2);
             else preostali = Integer.toString(kviz.getPitanja().size() - 1);
             brojPreostalih.setText(preostali);

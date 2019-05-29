@@ -50,7 +50,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
     public ArrayList<Kviz> kvizovi = new ArrayList<>();
     public ArrayList<Kategorija> kategorije = new ArrayList<>();
     private Kategorija svi;
-    private Kategorija odabranaKategorijaUSpineru;
+    private Kategorija odabranaKategorijaUSpineru ;
     private ListaAdapter adapter;
     private boolean daLiJeIzmjena = false;
     private int pozicija = -1;
@@ -61,6 +61,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
     private SpinerAdapter adapterSpinner;
     private ArrayList<Pitanje> listaSvaPitanja = new ArrayList<>();
     private Kategorija kategorijaKvizaKojiSeDodaje;
+    private KvizoviAkt aktivnost = this;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +73,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
         if(kvizovi.size() == 0 || !kvizovi.get(kvizovi.size() - 1).getNaziv().equalsIgnoreCase("dodaj kviz"))
             dodajAddKvizNaKraj();
         dodajSviKategorijuUSpinner();
+        odabranaKategorijaUSpineru = svi;
         Resources res = getResources();
 
 
@@ -109,19 +111,14 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
             dobaviIzBaze.delegat = this;
             dobaviIzBaze.execute("Kategorije");
 
-//            DobaviIzBaze dobaviIzBaze1 = new DobaviIzBaze();
-//            dobaviIzBaze1.delegat = this;
-//            dobaviIzBaze1.execute("Kvizovi");
-
-            odabranaKategorijaUSpineru = new Kategorija("glupost", "17");
-            odabranaKategorijaUSpineru.hashCode();
-            new DobaviSveKvizovePoKategoriji().execute();
-
             spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
                 public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                    odabranaKategorijaUSpineru =  (Kategorija) spinner.getSelectedItem();
-                   new DobaviSveKvizovePoKategoriji().execute();
+                   if(odabranaKategorijaUSpineru.getNaziv().equalsIgnoreCase("Svi")) {
+                       dobaviSveKvizoveizBaze();
+                   } else
+                       new DobaviSveKvizovePoKategoriji().execute();
                 }
 
                 @Override
@@ -130,6 +127,14 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
                 }
             });
         }
+    }
+
+    private void dobaviSveKvizoveizBaze() {
+        DobaviIzBaze dobaviIzBaze1 = new DobaviIzBaze();
+        dobaviIzBaze1.delegat = this;
+        kvizovi.clear();
+        dodajAddKvizNaKraj();
+        dobaviIzBaze1.execute("Kvizovi");
     }
 
     private void pokreniKviz(int position) {
@@ -452,7 +457,12 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
                 String naziv = kviz.getJSONObject("naziv").getString("stringValue");
                 String idKategorije = kviz.getJSONObject("idKategorije").getString("stringValue");
                 ArrayList<String> pitanjaIdevi = new ArrayList<String>();
-                JSONArray jArray = kviz.getJSONObject("pitanja").getJSONObject("arrayValue").getJSONArray("values");
+                JSONArray jArray = new JSONArray();
+                try {
+                  jArray =  kviz.getJSONObject("pitanja").getJSONObject("arrayValue").getJSONArray("values");
+                } catch (JSONException e) {
+
+                }
                 for (int j = 0; j < jArray.length(); j++){
                     pitanjaIdevi.add(jArray.getJSONObject(j).getString("stringValue"));
                 }
@@ -483,7 +493,12 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
                 String naziv = kviz.getJSONObject("naziv").getString("stringValue");
                 String idKategorije = kviz.getJSONObject("idKategorije").getString("stringValue");
                 ArrayList<String> pitanjaIdevi = new ArrayList<String>();
-                JSONArray jArray = kviz.getJSONObject("pitanja").getJSONObject("arrayValue").getJSONArray("values");
+                JSONArray jArray = new JSONArray();
+                try {
+                    jArray =  kviz.getJSONObject("pitanja").getJSONObject("arrayValue").getJSONArray("values");
+                } catch (JSONException e) {
+
+                }
                 for (int j = 0; j < jArray.length(); j++){
                     pitanjaIdevi.add(jArray.getJSONObject(j).getString("stringValue"));
                 }

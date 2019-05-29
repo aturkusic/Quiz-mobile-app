@@ -53,7 +53,7 @@ public class PitanjeFrag extends Fragment {
             textPitanja = (TextView) getView().findViewById(R.id.tekstPitanja);
             listaOdgovora = (ListView) getView().findViewById(R.id.odgovoriPitanja);
             pitanja = new ArrayList<>(kviz.getPitanja());
-            if(pitanja.get(pitanja.size() - 1).getNaziv().equalsIgnoreCase("Dodaj pitanje"))
+            if(pitanja.size() != 0 && pitanja.get(pitanja.size() - 1).getNaziv().equalsIgnoreCase("Dodaj pitanje"))
                 pitanja.remove(pitanja.size() - 1);
             Collections.shuffle(pitanja);
             if(pitanja.size() != 0) {
