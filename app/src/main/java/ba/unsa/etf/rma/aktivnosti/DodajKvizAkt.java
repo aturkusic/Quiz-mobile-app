@@ -9,7 +9,6 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Looper;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -38,7 +37,6 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 
 import ba.unsa.etf.rma.adapteri.SpinerAdapter;
@@ -61,6 +59,7 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
     Kategorija kategorija;
     Kategorija dodanaKategorija = null;
     Kviz kviz = new Kviz(); //odabrani kviz sa glavne aktivnosti
+    String kvizPrijePromjene = ""; //odabrani kviz sa glavne aktivnosti
     ArrayList<Kategorija> kategorije;
     SpinnerAdapter spinnerAdapter;
     Spinner spinner;
@@ -72,8 +71,7 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
     EditText imeKviza;
     Button dugme;
     Button importujBtn;
-    static final String AB = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-    static SecureRandom rnd = new SecureRandom();
+    String stariId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,7 +106,8 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
             addKat.setId("addkviz");
             kategorije.add(addKat);
         }
-
+        kvizPrijePromjene = kviz.getNaziv();
+        if(!kviz.getNaziv().equals(""))stariId = String.valueOf(kviz.hashCode());
 
         if(svrha.equals("izmjena")) dugme.setText("Izmijeni kviz");
 
@@ -194,20 +193,20 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
                 imeKviza.setHint("");
                 imeKviza.setBackgroundColor(0x00000000);
                 kategorija = (Kategorija) spinner.getSelectedItem();
-                String id = kviz.getId();
-                kviz = new Kviz(id, imeKviza.getText().toString(), pitanja, kategorija);
-                if(svrha.equalsIgnoreCase("izmjena"))
-                    new DodajUBazu().execute("Kvizovi", kviz.getId()); // izmjena u bazi
+                kviz = new Kviz(imeKviza.getText().toString(), pitanja, kategorija);
+                kviz.hashCode();
+                if(!kviz.getNaziv().equals(kvizPrijePromjene))
+                    new ProvjeriDaLiPostojiKviz().execute("Kvizovi");
                 else {
-                    new DodajUBazu().execute("Kvizovi", String.valueOf(kviz.hashCode())); // dodajem u bazu
+                    new DodajObrisiBaza().execute("Kvizovi", kviz.getId(), "obrisi"); // izmjena u bazi
+                    new DodajObrisiBaza().execute("Kvizovi", kviz.getId()); // izmjena u bazi
+                    Intent povratni = new Intent();
+                    povratni.putExtra("povratniKviz", kviz);
+                    povratni.putExtra("dodaneKategorije", kategorije);
+                    povratni.putExtra("tip", svrha);
+                    setResult(Activity.RESULT_OK, povratni);
+                    finish();
                 }
-                Intent povratni = new Intent();
-                povratni.putExtra("povratniKviz", kviz);
-                povratni.putExtra("dodaneKategorije", kategorije);
-                povratni.putExtra("tip", svrha);
-                setResult(Activity.RESULT_OK, povratni);
-                finish();
-
             }
         });
 
@@ -255,7 +254,7 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
                         odgovori += o + ",";
                     else odgovori += o;
                 }
-                new DodajUBazu().execute("Pitanja", String.valueOf(pitanje.hashCode()), pitanje.getNaziv(), odgovori,
+                new DodajObrisiBaza().execute("Pitanja", String.valueOf(pitanje.hashCode()), pitanje.getNaziv(), odgovori,
                         String.valueOf(pitanje.getIndexTacnog(pitanje.getTacanOdgovor())));
                 pitanja.add(pitanja.size() - 1, pitanje);
                 adapter.notifyDataSetChanged();
@@ -264,7 +263,7 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
             if (resultCode == RESULT_OK) {
                 Kategorija kategorija = (Kategorija) data.getSerializableExtra("povratnaKategorija");
                 dodanaKategorija = kategorija;
-                new DodajUBazu().execute("Kategorije", String.valueOf(dodanaKategorija.hashCode())); // dodajem u bazu
+                new DodajObrisiBaza().execute("Kategorije", String.valueOf(dodanaKategorija.hashCode())); // dodajem u bazu
                 kategorije.add(kategorije.size() - 1, kategorija);
                 spinner.setSelection(kategorije.size() - 2);
             }
@@ -297,7 +296,7 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
                                         kategorije.add(kategorije.size() - 1, kat);
                                         spinner.setSelection(kategorije.size() - 2);
                                         dodanaKategorija = kat;
-                                        new DodajUBazu().execute("Kategorije", String.valueOf(dodanaKategorija.hashCode())); // dodajem u bazu
+                                        new DodajObrisiBaza().execute("Kategorije", String.valueOf(dodanaKategorija.hashCode())); // dodajem u bazu
                                     }
                                 } else {
                                     Pitanje pitanje = new Pitanje();
@@ -316,7 +315,7 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
                                         else odgovori += o;
                                     }
                                     listaMogucih.remove(pitanje);
-                                    new DodajUBazu().execute("Pitanja", String.valueOf(pitanje.hashCode()), pitanje.getNaziv(), odgovori,
+                                    new DodajObrisiBaza().execute("Pitanja", String.valueOf(pitanje.hashCode()), pitanje.getNaziv(), odgovori,
                                             String.valueOf(pitanje.getIndexTacnog(pitanje.getTacanOdgovor())));
                                     adapter.notifyDataSetChanged();
                                 }
@@ -506,24 +505,29 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
         adapterMogucihPitanja.notifyDataSetChanged();
     }
 
-    private class DodajUBazu extends AsyncTask<String, Integer, Void> {
+    private class DodajObrisiBaza extends AsyncTask<String, Integer, Void> {
 
         protected  Void doInBackground(String... urls) {//prvi param kolekcija drugi sta ubacujemo
             String url1;
             url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "?documentId=" + urls[1] + "&access_token=" + token;
-            if(svrha.equals("izmjena") && urls[0].equals("Kvizovi")) url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "/" + urls[1] + "?access_token=" + token;
+            if(svrha.equals("izmjena") && urls[0].equals("Kvizovi"))
+                url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "/" + urls[1] + "?access_token=" + token;
             URL url;
             try {
                 url = new URL(url1);
-                HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
+                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setDoInput(true);
-                if(svrha.equals("izmjena") && urls[0].equals("Kvizovi"))
+                if (urls.length > 2 && svrha.equals("izmjena") && urls[0].equals("Kvizovi"))
+                    urlConnection.setRequestMethod("DELETE");
+                else if(svrha.equals("izmjena") && urls[0].equals("Kvizovi"))
                     urlConnection.setRequestMethod("PATCH");
-                else  urlConnection.setRequestMethod("POST");
+                else urlConnection.setRequestMethod("POST");
                 urlConnection.setRequestProperty("Content-Type", "application/json");
                 urlConnection.setRequestProperty("Accept", "application/json");
                 String dokument = "";
-                if(urls[0].equalsIgnoreCase("Kategorije")) {
+                if(urls.length > 2 && svrha.equals("izmjena") && urls[0].equals("Kvizovi")) {
+                    //nothing -- brisanje ne zahtjeva tijelo
+                } else if(urls[0].equalsIgnoreCase("Kategorije")) {
                     dokument = "{ \"fields\": { \"idIkonice\": { \"integerValue\": \"" + dodanaKategorija.getId() + "\"}, \"naziv\": { \"stringValue\": \"" + dodanaKategorija.getNaziv() + "\"}}}";
                 } else if(urls[0].equalsIgnoreCase("Kvizovi")) {
                     int i = 0;
@@ -615,11 +619,56 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
         return sb.toString();
     }
 
-    String randomString( int len ){
-        StringBuilder sb = new StringBuilder( len );
-        for( int i = 0; i < len; i++ )
-            sb.append( AB.charAt( rnd.nextInt(AB.length()) ) );
-        return sb.toString();
+
+    private class ProvjeriDaLiPostojiKviz extends AsyncTask<String, Integer,  ArrayList<Kviz>> {
+        protected ArrayList<Kviz> doInBackground(String... urls) {
+            ArrayList<Kviz> listaKvizova = new ArrayList<>();
+            try {
+                InputStream is = getResources().openRawResource(R.raw.secret);
+                GoogleCredential credentials = null;
+                credentials = GoogleCredential.fromStream(is).createScoped(Lists.newArrayList("https://www.googleapis.com/auth/datastore"));
+                credentials.refreshToken();
+                String TOKEN = credentials.getAccessToken();
+                listaKvizova = new ArrayList<>();
+                String url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "/" + kviz.getId() + "?access_token=" + TOKEN;
+                URL url = new URL(url1);
+                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+                InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                return null;
+            }
+            return listaKvizova;
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<Kviz> aVoid) {
+            if(aVoid == null) {
+                if(svrha.equalsIgnoreCase("izmjena")) {
+                    new DodajObrisiBaza().execute("Kvizovi", stariId, "obrisi"); // izmjena u bazi
+                    new DodajObrisiBaza().execute("Kvizovi", kviz.getId()); // izmjena u bazi
+                }
+                else new DodajObrisiBaza().execute("Kvizovi", kviz.getId()); // dodajem u bazu
+                Intent povratni = new Intent();
+                povratni.putExtra("povratniKviz", kviz);
+                povratni.putExtra("dodaneKategorije", kategorije);
+                povratni.putExtra("tip", svrha);
+                setResult(Activity.RESULT_OK, povratni);
+                finish();
+            } else {
+                AlertDialog alertDialog = new AlertDialog.Builder(DodajKvizAkt.this).create();
+                alertDialog.setTitle("Alert");
+                alertDialog.setMessage("Uneseni kviz vec postoji!");
+                alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+                alertDialog.show();
+            }
+        }
     }
 
 }
