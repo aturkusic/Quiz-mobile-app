@@ -70,6 +70,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
 
         GlavnaKlasa = this;
 
+
         if(kvizovi.size() == 0 || !kvizovi.get(kvizovi.size() - 1).getNaziv().equalsIgnoreCase("dodaj kviz"))
             dodajAddKvizNaKraj();
         dodajSviKategorijuUSpinner();
@@ -258,6 +259,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
     private void dodajSviKategorijuUSpinner() {
         svi = new Kategorija();
         svi.setNaziv("Svi");
+        svi.hashCode();
         svi.setId("157");
         kategorije.add(svi);
     }
@@ -344,7 +346,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
                 JSONArray items = new JSONArray();
                 if(urls[0].equalsIgnoreCase("Kvizovi")) {
                     items = jo.getJSONArray("documents");
-                    lista = ucitajSveKvizoveIzBaze(items);
+                    lista = ucitajKvizoveOdabraneKategorije(items, 1);
                 } else if(urls.length == 3 && urls[2].equalsIgnoreCase("Kategorija")) {
                     kategorijaKvizaKojiSeDodaje = ucitajKategoriju(jo);
                 } else if(urls[0].equalsIgnoreCase("Kategorije")) {
@@ -419,7 +421,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
                 jo = new JSONObject(rezultat);
                 JSONArray items = new JSONArray();
                 items = jo.getJSONArray("documents");
-                kvizovi = ucitajKvizoveOdabraneKategorije(items);
+                kvizovi = ucitajKvizoveOdabraneKategorije(items, 2);
 
                 try(BufferedReader br = new BufferedReader(new InputStreamReader(in, "utf-8"))) {
                     StringBuilder response = new StringBuilder();
@@ -447,13 +449,17 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
         }
     }
 
-    private ArrayList<Kviz> ucitajKvizoveOdabraneKategorije(JSONArray items) {
+    private ArrayList<Kviz> ucitajKvizoveOdabraneKategorije(JSONArray items, int odakleJePozvano ) {
         ArrayList<Kviz> kvizoviIzBaze = new ArrayList<>();
         try {
             for(int i = 0; i < items.length(); i++) {
-                JSONObject name = items.getJSONObject(i);;
-                JSONObject dokument = name.getJSONObject("document");
-                JSONObject kviz = dokument.getJSONObject("fields");
+                JSONObject name = items.getJSONObject(i);
+                JSONObject dokument = new JSONObject();
+                JSONObject kviz = new JSONObject();
+                if(odakleJePozvano == 2) {
+                    dokument = name.getJSONObject("document");
+                    kviz = dokument.getJSONObject("fields");
+                } else kviz = name.getJSONObject("fields");
                 String naziv = kviz.getJSONObject("naziv").getString("stringValue");
                 String idKategorije = kviz.getJSONObject("idKategorije").getString("stringValue");
                 ArrayList<String> pitanjaIdevi = new ArrayList<String>();
@@ -466,45 +472,13 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
                 for (int j = 0; j < jArray.length(); j++){
                     pitanjaIdevi.add(jArray.getJSONObject(j).getString("stringValue"));
                 }
-                String[] tmp = {"Kategorije", idKategorije, "Kategorija"};
-                new DobaviIzBaze().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, tmp).get();
-                new DobaviIzBaze().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,"Pitanja").get();
-                kvizoviIzBaze.add(new Kviz(naziv, dajOdgovarajucaPitanja(pitanjaIdevi), kategorijaKvizaKojiSeDodaje));
-
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-        return kvizoviIzBaze;
-    }
-
-    private ArrayList<Kviz> ucitajSveKvizoveIzBaze(JSONArray items) {
-        ArrayList<Kviz> kvizoviIzBaze = new ArrayList<>();
-        try {
-            for(int i = 0; i < items.length(); i++) {
-                JSONObject name = null;
-                name = items.getJSONObject(i);
-                JSONObject kviz = null;
-                kviz = name.getJSONObject("fields");
-                String naziv = kviz.getJSONObject("naziv").getString("stringValue");
-                String idKategorije = kviz.getJSONObject("idKategorije").getString("stringValue");
-                ArrayList<String> pitanjaIdevi = new ArrayList<String>();
-                JSONArray jArray = new JSONArray();
-                try {
-                    jArray =  kviz.getJSONObject("pitanja").getJSONObject("arrayValue").getJSONArray("values");
-                } catch (JSONException e) {
-
+                if(i == 0)
+                    new DobaviIzBaze().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "Pitanja").get();
+                for (Kategorija k : kategorije) {
+                    if (k.getIdUBazi().equals(idKategorije)) {
+                        kategorijaKvizaKojiSeDodaje = k;
+                    }
                 }
-                for (int j = 0; j < jArray.length(); j++){
-                    pitanjaIdevi.add(jArray.getJSONObject(j).getString("stringValue"));
-                }
-                String[] tmp = {"Kategorije", idKategorije, "Kategorija"};
-                new DobaviIzBaze().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, tmp).get();
-                new DobaviIzBaze().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,"Pitanja").get();
                 kvizoviIzBaze.add(new Kviz(naziv, dajOdgovarajucaPitanja(pitanjaIdevi), kategorijaKvizaKojiSeDodaje));
             }
         } catch (JSONException e) {
@@ -529,6 +503,8 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
     public void processFinish(ArrayList<?> output) {
         if(output.get(0).getClass() == Kategorija.class) {
             ArrayList<Kategorija> kategorijas = (ArrayList<Kategorija>) output;
+            kategorije.clear();
+            dodajSviKategorijuUSpinner();
             kategorije.addAll(kategorijas);
             adapterSpinner.notifyDataSetChanged();
         } else {

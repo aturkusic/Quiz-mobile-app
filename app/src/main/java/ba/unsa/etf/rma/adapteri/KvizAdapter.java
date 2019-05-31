@@ -116,7 +116,7 @@ public class KvizAdapter extends BaseAdapter implements Filterable {
                     holder.image.setImageResource(R.drawable.addkviz);
                     holder.textBrojPitanja.setText("");
                 } else {
-                    holder.textBrojPitanja.setText(Integer.toString(trenutniKviz.getPitanja().size() - 1));
+                    holder.textBrojPitanja.setText(Integer.toString(trenutniKviz.getPitanja().size()));
                 }
             }
         }
