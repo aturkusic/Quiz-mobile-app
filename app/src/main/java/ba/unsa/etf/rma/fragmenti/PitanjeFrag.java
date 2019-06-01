@@ -43,6 +43,7 @@ public class PitanjeFrag extends Fragment {
 
     public interface PitanjeFragListener {
         void onInputASent(CharSequence brojTacnihChar, CharSequence brojPreostalihChar, CharSequence postotakTacnihChar);
+        void kvizZavrsen(Double postotakTacnih);
     }
 
     @Override
@@ -92,6 +93,8 @@ public class PitanjeFrag extends Fragment {
                                 textPitanja.setText("“Kviz je završen!");
                                 listaOdgovora.setEnabled(false);
                                 odgovori.clear();
+                                if(listener != null)
+                                    listener.kvizZavrsen(postotakTacnih);
                             }
                             adapter.setPozicijaKliknutog(-1);
                             adapter.setPozicijaTacnog(-1);

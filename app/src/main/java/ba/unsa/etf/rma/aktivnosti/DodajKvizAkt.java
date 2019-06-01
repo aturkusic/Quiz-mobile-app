@@ -46,6 +46,8 @@ import ba.unsa.etf.rma.klase.Kviz;
 import ba.unsa.etf.rma.adapteri.ListaPitanjaAdapter;
 import ba.unsa.etf.rma.klase.Pitanje;
 import ba.unsa.etf.rma.R;
+import ba.unsa.etf.rma.klase.Rang;
+import ba.unsa.etf.rma.ostalo.Trojka;
 
 public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.IListaMogucihAsyncResponse {
     private static final int SECOND_ACTIVITY_REQUEST_CODE = 0;
@@ -72,6 +74,7 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
     Button dugme;
     Button importujBtn;
     String stariId;
+    private Rang rangZaIzmijenit = new Rang();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -200,6 +203,7 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
                 else {
                     new DodajObrisiBaza().execute("Kvizovi", kviz.getId(), "obrisi"); // izmjena u bazi
                     new DodajObrisiBaza().execute("Kvizovi", kviz.getId()); // izmjena u bazi
+                    new DobaviRanglistinIDIzBaze().execute();
                     Intent povratni = new Intent();
                     povratni.putExtra("povratniKviz", kviz);
                     povratni.putExtra("dodaneKategorije", kategorije);
@@ -624,11 +628,7 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
         protected ArrayList<Kviz> doInBackground(String... urls) {
             ArrayList<Kviz> listaKvizova = new ArrayList<>();
             try {
-                InputStream is = getResources().openRawResource(R.raw.secret);
-                GoogleCredential credentials = null;
-                credentials = GoogleCredential.fromStream(is).createScoped(Lists.newArrayList("https://www.googleapis.com/auth/datastore"));
-                credentials.refreshToken();
-                String TOKEN = credentials.getAccessToken();
+                String TOKEN = dajToken();
                 listaKvizova = new ArrayList<>();
                 String url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "/" + kviz.getId() + "?access_token=" + TOKEN;
                 URL url = new URL(url1);
@@ -648,6 +648,7 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
                 if(svrha.equalsIgnoreCase("izmjena")) {
                     new DodajObrisiBaza().execute("Kvizovi", stariId, "obrisi"); // izmjena u bazi
                     new DodajObrisiBaza().execute("Kvizovi", kviz.getId()); // izmjena u bazi
+                    new DobaviRanglistinIDIzBaze().execute();
                 }
                 else new DodajObrisiBaza().execute("Kvizovi", kviz.getId()); // dodajem u bazu
                 Intent povratni = new Intent();
@@ -669,6 +670,176 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
                 alertDialog.show();
             }
         }
+    }
+
+    private class IzmijeniImeKvizaURanglisti extends AsyncTask<String, Integer,  ArrayList<Kviz>> {
+        @Override
+        protected ArrayList<Kviz> doInBackground(String... urls) {
+            String url1;
+            url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "/" + urls[1] + "?access_token=" + token;
+            URL url;
+            try {
+                url = new URL(url1);
+                HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
+                urlConnection.setDoInput(true);
+                urlConnection.setRequestMethod("PATCH");
+                urlConnection.setRequestProperty("Content-Type", "application/json");
+                urlConnection.setRequestProperty("Accept", "application/json");
+
+                String dokument = "";
+                int i = 0;
+                dokument = "{ \"fields\": { \"lista\": { \"mapValue\": { \"fields\": {\n";
+                for(Trojka<Integer, String, Double> t: rangZaIzmijenit.getLista()) {
+                    if(i != rangZaIzmijenit.getLista().size() - 1)
+                        dokument += "\"" + t.getFirst() + "\": { \"mapValue\": { \"fields\": { \"" + t.getSecond() + "\": { \n" +
+                                "\"doubleValue\": \"" + t.getThird() +"\" } } } },";
+                    else dokument += "\"" + t.getFirst() + "\": { \"mapValue\": { \"fields\": { \"" + t.getSecond() + "\": { \n" +
+                            "\"doubleValue\": \"" + t.getThird() +"\" } } } }";
+                }
+                dokument += "} } }, \"nazivKviza\": { \"stringValue\": \"" + kviz.getNaziv() + "\" } } }";
+
+                try (OutputStream os = urlConnection.getOutputStream()) {
+                    byte[] input = dokument.getBytes("utf-8");
+                    os.write(input, 0, input.length);
+                }
+
+                int code = urlConnection.getResponseCode();
+                InputStream odgovor = urlConnection.getInputStream();
+                try(BufferedReader br = new BufferedReader(new InputStreamReader(odgovor, "utf-8"))) {
+                    StringBuilder response = new StringBuilder();
+                    String responseLine = null;
+                    while ((responseLine = br.readLine()) != null) {
+                        response.append(responseLine.trim());
+                    }
+                    Log.d("ODGOVOR", response.toString());
+                }
+            }  catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return null ;
+        }
+    }
+
+    public String dajToken() {
+        InputStream is = getResources().openRawResource(R.raw.secret);
+        GoogleCredential credentials = null;
+        try {
+            credentials = GoogleCredential.fromStream(is).createScoped(Lists.newArrayList("https://www.googleapis.com/auth/datastore"));
+            credentials.refreshToken();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return credentials.getAccessToken();
+    }
+
+
+    private class DobaviRanglistinIDIzBaze extends AsyncTask<String, Integer, ArrayList<Trojka<Integer, String, Double>>> {
+
+        protected ArrayList<Trojka<Integer, String, Double>> doInBackground(String... urls) {
+            String TOKEN = dajToken();
+            String query = "{\n" +
+                    "    \"structuredQuery\": {\n" +
+                    "        \"where\" : {\n" +
+                    "            \"fieldFilter\" : { \n" +
+                    "                \"field\": {\"fieldPath\": \"nazivKviza\"}, \n" +
+                    "                \"op\":\"EQUAL\", \n" +
+                    "                \"value\": {\"stringValue\": \"" + kvizPrijePromjene + "\"}\n" +
+                    "            }\n" +
+                    "        },\n" +
+                    "        \"select\": { \"fields\": [ {\"fieldPath\": \"nazivKviza\"}, {\"fieldPath\": \"lista\"}] },\n" +
+                    "        \"from\": [{\"collectionId\": \"Rangliste\"}],\n" +
+                    "       \"limit\": 1000 \n" +
+                    "    }\n" +
+                    "}";
+            String url1  = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents:runQuery?access_token=" + TOKEN;
+            ArrayList<Trojka<Integer, String, Double>> rangID = new ArrayList<>();
+            try {
+                URL url = new URL(url1);
+                HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
+                urlConnection.setDoInput(true);
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setRequestProperty("Content-Type", "application/json");
+                urlConnection.setRequestProperty("Accept", "application/json");
+                try (OutputStream os = urlConnection.getOutputStream()) {
+                    byte[] input = query.getBytes("utf-8");
+                    os.write(input, 0, input.length);
+                }
+
+                int code = urlConnection.getResponseCode();
+                InputStream in = urlConnection.getInputStream();
+                String rezultat = DodajKvizAkt.convertStreamToString(in);
+                rezultat = "{ \"documents\": " + rezultat + "}";
+                JSONObject jo = null;
+                jo = new JSONObject(rezultat);
+                JSONArray items = new JSONArray();
+                items = jo.getJSONArray("documents");
+                rangID = ucitajRang(items);
+
+                try(BufferedReader br = new BufferedReader(new InputStreamReader(in, "utf-8"))) {
+                    StringBuilder response = new StringBuilder();
+                    String responseLine = null;
+                    while ((responseLine = br.readLine()) != null) {
+                        response.append(responseLine.trim());
+                    }
+                    Log.d("ODGOVOR", response.toString());
+                }
+            }  catch (IOException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            return rangID ;
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<Trojka<Integer, String, Double>> s) {
+            new IzmijeniImeKvizaURanglisti().execute("Rangliste", rangZaIzmijenit.getId());
+        }
+    }
+
+    public  ArrayList<Trojka<Integer, String, Double>> ucitajRang(JSONArray items) {
+        ArrayList<Trojka<Integer, String, Double>> rangoviIzBaze = new ArrayList<>();
+        try {
+            for (int i = 0; i < items.length(); i++) {
+                JSONObject name = items.getJSONObject(i);
+                JSONObject dokument = new JSONObject();
+                JSONObject rang = new JSONObject();
+                dokument = name.getJSONObject("document");
+                rang = dokument.getJSONObject("fields");
+                String id = dokument.getString("name");
+                String id1 ="";
+                int duzina = 0;
+                for(int j = id.length() - 1; j > 0; j--) {
+                    if(id.charAt(j) == '/') break;
+                    else duzina++;
+                }
+                id1 = id.substring(id.length() - duzina);
+                rangZaIzmijenit.setId(id1);
+                String naziv = rang.getJSONObject("nazivKviza").getString("stringValue");
+                JSONObject mapaGlavna = rang.getJSONObject("lista").getJSONObject("mapValue").getJSONObject("fields");
+                try {
+                    int j = 1;
+                    while(true) {
+                        JSONObject mapaSporedna = mapaGlavna.getJSONObject(String.valueOf(j)).getJSONObject("mapValue").getJSONObject("fields");
+                        String nazivTakmicara = mapaSporedna.names().toString();
+                        nazivTakmicara = nazivTakmicara.replace("[", "");
+                        nazivTakmicara = nazivTakmicara.replace("]", "");
+                        nazivTakmicara = nazivTakmicara.replace("\"", "");
+                        Double procenat = mapaSporedna.getJSONObject(nazivTakmicara).getDouble("doubleValue");
+                        rangoviIzBaze.add(new Trojka<>(j, nazivTakmicara, procenat));
+                        j++;
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        rangZaIzmijenit.setLista(rangoviIzBaze);
+        return rangoviIzBaze;
     }
 
 }

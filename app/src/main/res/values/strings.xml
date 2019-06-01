@@ -16,4 +16,5 @@
     <string name="procenat_tacnih_odgovora">Procenat tacnih odgovora:</string>
     <string name="zavrsi_kviz">zavrsi kviz</string>
     <string name="lista_kategorija">Lista Kategorija:</string>
+    <string name="rang_lista_odabranog_kviza">Rang lista odabranog kviza:</string>
 </resources>

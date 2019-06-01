@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="31dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/pozicijaRangListaLW"
+            android:layout_width="10dp"
+            android:layout_height="match_parent"
+            android:textSize="18dp"
+            android:layout_weight="0.2"
+            />
+
+        <TextView
+            android:id="@+id/imeIgracaLW"
+            android:layout_width="90dp"
+            android:textAlignment="center"
+            android:layout_height="match_parent"
+            android:layout_weight="0.8"
+           />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/procenatTacnihLW"
+        android:textAlignment="center"
+        android:layout_width="match_parent"
+        android:layout_height="32dp"
+         />
+</LinearLayout>
