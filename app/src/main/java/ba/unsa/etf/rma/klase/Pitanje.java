@@ -89,7 +89,7 @@ public class Pitanje implements Serializable {
 
     @Override
     public int hashCode() {
-        id = String.valueOf(Objects.hash(naziv));
+        id = String.valueOf(Objects.hash(naziv.toLowerCase()));
         return Integer.parseInt(id);
     }
 }

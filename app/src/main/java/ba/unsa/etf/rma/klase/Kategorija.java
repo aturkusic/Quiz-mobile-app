@@ -71,7 +71,7 @@ public class Kategorija implements Serializable {
 
     @Override
     public int hashCode() {
-        idUBazi = String.valueOf(Objects.hash(naziv));
+        idUBazi = String.valueOf(Objects.hash(naziv.toLowerCase()));
         return Integer.parseInt(idUBazi);
     }
 }
