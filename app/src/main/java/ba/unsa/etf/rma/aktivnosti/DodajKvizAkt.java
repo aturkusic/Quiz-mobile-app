@@ -188,11 +188,6 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
                     imeKviza.setHint("Odaberite drugo ime");
                     return;
                 }
-                if(daLiPostojiKviz(imeKviza.getText().toString())) {
-                    imeKviza.setBackgroundColor(Color.RED);
-                    imeKviza.setHint("Odaberite drugo ime");
-                    return;
-                }
                 imeKviza.setHint("");
                 imeKviza.setBackgroundColor(0x00000000);
                 kategorija = (Kategorija) spinner.getSelectedItem();
@@ -624,12 +619,12 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
     }
 
 
-    private class ProvjeriDaLiPostojiKviz extends AsyncTask<String, Integer,  ArrayList<Kviz>> {
-        protected ArrayList<Kviz> doInBackground(String... urls) {
-            ArrayList<Kviz> listaKvizova = new ArrayList<>();
+    private class ProvjeriDaLiPostojiKviz extends AsyncTask<String, Integer,  Integer> {
+        protected Integer doInBackground(String... urls) {
+            Integer povratni = 0;
             try {
                 String TOKEN = dajToken();
-                listaKvizova = new ArrayList<>();
+
                 String url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "/" + kviz.getId() + "?access_token=" + TOKEN;
                 URL url = new URL(url1);
                 HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
@@ -637,14 +632,14 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             } catch (IOException e) {
-                return null;
+                return -1;
             }
-            return listaKvizova;
+            return povratni;
         }
 
         @Override
-        protected void onPostExecute(ArrayList<Kviz> aVoid) {
-            if(aVoid == null) {
+        protected void onPostExecute(Integer aVoid) {
+            if(aVoid == -1) {
                 if(svrha.equalsIgnoreCase("izmjena")) {
                     new DodajObrisiBaza().execute("Kvizovi", stariId, "obrisi"); // izmjena u bazi
                     new DodajObrisiBaza().execute("Kvizovi", kviz.getId()); // izmjena u bazi
