@@ -459,7 +459,8 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
                 if(odakleJePozvano == 2) {
                     dokument = name.getJSONObject("document");
                     kviz = dokument.getJSONObject("fields");
-                } else kviz = name.getJSONObject("fields");
+                } else
+                    kviz = name.getJSONObject("fields");
                 String naziv = kviz.getJSONObject("naziv").getString("stringValue");
                 String idKategorije = kviz.getJSONObject("idKategorije").getString("stringValue");
                 ArrayList<String> pitanjaIdevi = new ArrayList<String>();

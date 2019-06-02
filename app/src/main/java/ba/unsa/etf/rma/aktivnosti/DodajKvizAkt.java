@@ -49,7 +49,7 @@ import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.klase.Rang;
 import ba.unsa.etf.rma.ostalo.Trojka;
 
-public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.IListaMogucihAsyncResponse {
+public class DodajKvizAkt extends AppCompatActivity {
     private static final int SECOND_ACTIVITY_REQUEST_CODE = 0;
     private static final int SECOND_ACTIVITY_REQUEST_CODE1 = 1;
     private DobaviMogucaPitanja dobaviMogucaPitanjaAsync = new DobaviMogucaPitanja();
@@ -67,7 +67,6 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
     Spinner spinner;
     ArrayList<Kviz> kvizovi; //svi kvizovi
     String svrha;
-    String token;
     ListView listaPitanja;
     ListView listaMogucihPitanja;
     EditText imeKviza;
@@ -108,6 +107,7 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
             addKat.setNaziv("Dodaj kategoriju");
             addKat.setId("addkviz");
             kategorije.add(addKat);
+            kategorije.add(addKat);
         }
         kvizPrijePromjene = kviz.getNaziv();
         if(!kviz.getNaziv().equals(""))stariId = String.valueOf(kviz.hashCode());
@@ -126,9 +126,8 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
 
         spinner.setSelection(((SpinerAdapter) spinnerAdapter).getPozicija(kategorija));
 
-        new DobaviTokenKlasa().execute();
-        dobaviMogucaPitanjaAsync.delegat = this;
-        dobaviMogucaPitanjaAsync.execute("Pitanja");
+
+        new DobaviMogucaPitanja().execute("Pitanja");
 
         listaPitanja.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -434,30 +433,9 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
         this.kviz = kviz;
     }
 
-
-    private class DobaviTokenKlasa extends AsyncTask<URL, Integer, String> {
-        protected String doInBackground(URL... urls) {
-            InputStream is = getResources().openRawResource(R.raw.secret);
-            GoogleCredential credentials = null;
-            try {
-                credentials = GoogleCredential.fromStream(is).createScoped(Lists.newArrayList("https://www.googleapis.com/auth/datastore"));
-                credentials.refreshToken();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            String TOKEN = credentials.getAccessToken();
-            return TOKEN;
-
-        }
-
-        protected void onPostExecute(String result) {
-            token = result;
-        }
-    }
-
     private class DobaviMogucaPitanja extends AsyncTask<String, Integer, ArrayList<Pitanje>> {
-        public Interfejsi.IListaMogucihAsyncResponse delegat = null;
         protected  ArrayList<Pitanje> doInBackground(String... urls) {//prvi param kolekcija drugi id dokumenta
+            String token = dajToken();
             String url1;
             ArrayList<Pitanje> listaMogucih = new ArrayList<>();
             if(urls.length == 1)
@@ -494,19 +472,16 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
 
         @Override
         protected void onPostExecute( ArrayList<Pitanje> lista) {
-            delegat.processFinish(lista);
+            listaMogucih.addAll(lista);
+            adapterMogucihPitanja.notifyDataSetChanged();
         }
     }
 
-    @Override
-    public void processFinish(ArrayList<Pitanje> output) { // metoda interfejsa za komunikaciju izmedju asynctask i aktivnosti
-        listaMogucih.addAll(output);
-        adapterMogucihPitanja.notifyDataSetChanged();
-    }
 
     private class DodajObrisiBaza extends AsyncTask<String, Integer, Void> {
 
         protected  Void doInBackground(String... urls) {//prvi param kolekcija drugi sta ubacujemo
+            String token = dajToken();
             String url1;
             url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "?documentId=" + urls[1] + "&access_token=" + token;
             if(svrha.equals("izmjena") && urls[0].equals("Kvizovi"))
@@ -653,16 +628,7 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
                 setResult(Activity.RESULT_OK, povratni);
                 finish();
             } else {
-                AlertDialog alertDialog = new AlertDialog.Builder(DodajKvizAkt.this).create();
-                alertDialog.setTitle("Alert");
-                alertDialog.setMessage("Uneseni kviz vec postoji!");
-                alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                            }
-                        });
-                alertDialog.show();
+                dialogAkcija("Uneseni kviz vec postoji!");
             }
         }
     }
@@ -670,6 +636,7 @@ public class DodajKvizAkt extends AppCompatActivity implements Interfejsi.ILista
     private class IzmijeniImeKvizaURanglisti extends AsyncTask<String, Integer,  ArrayList<Kviz>> {
         @Override
         protected ArrayList<Kviz> doInBackground(String... urls) {
+            String token = dajToken();
             String url1;
             url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "/" + urls[1] + "?access_token=" + token;
             URL url;
