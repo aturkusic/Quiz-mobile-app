@@ -232,7 +232,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
             if (resultCode == RESULT_OK) {
                 // Get String data from Intent
                 Kviz kviz = (Kviz) data.getSerializableExtra("povratniKviz");
-                if(kviz.getPitanja().get(kviz.getPitanja().size() - 1).getNaziv().equalsIgnoreCase("Dodaj pitanje")) kviz.getPitanja().remove(kviz.getPitanja().size() - 1);
+                if(kviz != null && kviz.getPitanja()!= null && kviz.getPitanja().get(kviz.getPitanja().size() - 1).getNaziv().equalsIgnoreCase("Dodaj pitanje")) kviz.getPitanja().remove(kviz.getPitanja().size() - 1);
                 ArrayList<Kategorija> kategorijee = (ArrayList<Kategorija>) data.getSerializableExtra("dodaneKategorije"); // lista svih dodanih kategorija u dodajKvizAkt
                 String tip = data.getStringExtra("tip");
                 if(kategorijee != null) {
