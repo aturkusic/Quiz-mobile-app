@@ -52,7 +52,6 @@ import ba.unsa.etf.rma.ostalo.Trojka;
 public class DodajKvizAkt extends AppCompatActivity {
     private static final int SECOND_ACTIVITY_REQUEST_CODE = 0;
     private static final int SECOND_ACTIVITY_REQUEST_CODE1 = 1;
-    private DobaviMogucaPitanja dobaviMogucaPitanjaAsync = new DobaviMogucaPitanja();
     ArrayList<Pitanje> pitanja = new ArrayList<>();
     ArrayList<Pitanje> listaMogucih = new ArrayList<>();
     ListaPitanjaAdapter adapter;
@@ -107,7 +106,6 @@ public class DodajKvizAkt extends AppCompatActivity {
             addKat.setNaziv("Dodaj kategoriju");
             addKat.setId("addkviz");
             kategorije.add(addKat);
-            kategorije.add(addKat);
         }
         kvizPrijePromjene = kviz.getNaziv();
         if(!kviz.getNaziv().equals(""))stariId = String.valueOf(kviz.hashCode());
@@ -125,7 +123,6 @@ public class DodajKvizAkt extends AppCompatActivity {
         imeKviza.setText(naziv);
 
         spinner.setSelection(((SpinerAdapter) spinnerAdapter).getPozicija(kategorija));
-
 
         new DobaviMogucaPitanja().execute("Pitanja");
 

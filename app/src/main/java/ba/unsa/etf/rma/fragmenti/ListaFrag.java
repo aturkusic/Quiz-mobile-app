@@ -8,17 +8,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.ListView;
-import android.widget.TextView;
-
 import java.util.ArrayList;
-
 import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.adapteri.KategorijeAdapter;
-import ba.unsa.etf.rma.adapteri.ListaAdapter;
 import ba.unsa.etf.rma.klase.Kategorija;
-import ba.unsa.etf.rma.klase.Kviz;
+
 
 public class ListaFrag extends Fragment {
     private Filtriranje filtriranje;
@@ -27,7 +22,7 @@ public class ListaFrag extends Fragment {
     private ListView lista;
 
     public interface Filtriranje {
-        void filtriraj(String kategorija, int i);
+        void filtriraj(Kategorija kategorija);
     }
 
     @Override
@@ -54,7 +49,7 @@ public class ListaFrag extends Fragment {
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     adapter.setIndexOdabranog(position);
                     adapter.notifyDataSetChanged();
-                    filtriranje.filtriraj(kategorije.get(position).getNaziv(), position);
+                    filtriranje.filtriraj(kategorije.get(position));
                 }
             });
 
@@ -82,5 +77,10 @@ public class ListaFrag extends Fragment {
         kategorije.addAll(kategorije1);
         adapter.notifyDataSetChanged();
     }
+
+    public void dodajSveKategorije() {
+        adapter.notifyDataSetChanged();
+    }
+
 
 }

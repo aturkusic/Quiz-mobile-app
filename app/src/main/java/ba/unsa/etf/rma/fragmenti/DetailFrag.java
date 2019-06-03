@@ -3,6 +3,7 @@ package ba.unsa.etf.rma.fragmenti;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.res.Resources;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,13 +12,32 @@ import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.ListView;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.common.collect.Lists;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 
 import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.adapteri.KategorijeAdapter;
 import ba.unsa.etf.rma.adapteri.KvizAdapter;
+import ba.unsa.etf.rma.aktivnosti.DodajKvizAkt;
+import ba.unsa.etf.rma.aktivnosti.KvizoviAkt;
+import ba.unsa.etf.rma.klase.Interfejsi;
 import ba.unsa.etf.rma.klase.Kategorija;
 import ba.unsa.etf.rma.klase.Kviz;
+
+import static ba.unsa.etf.rma.aktivnosti.KvizoviAkt.ucitajKategoriju;
+import static ba.unsa.etf.rma.aktivnosti.KvizoviAkt.ucitajSveKategorijeIzBaze;
 
 public class DetailFrag extends Fragment {
     private ArrayList<Kviz> kvizovi = new ArrayList<>();
@@ -64,6 +84,12 @@ public class DetailFrag extends Fragment {
         }
     }
 
+    public void dodajSveKvizove(ArrayList<Kviz> kvizo) {
+        kvizovi.clear();
+        kvizovi.addAll(kvizo);
+        adapter.notifyDataSetChanged();
+    }
+
     public void dodajIzmijeniKviz(ArrayList<Kviz> kviz_ovi) {
         kvizovi.clear();
         kvizovi.addAll(kviz_ovi);
@@ -89,5 +115,4 @@ public class DetailFrag extends Fragment {
     public KvizAdapter getAdapter() {
         return adapter;
     }
-
 }

@@ -61,7 +61,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
     private SpinerAdapter adapterSpinner;
     private ArrayList<Pitanje> listaSvaPitanja = new ArrayList<>();
     private Kategorija kategorijaKvizaKojiSeDodaje;
-    private KvizoviAkt aktivnost = this;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,7 +81,11 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
         final ListView list = (ListView) findViewById(R.id.lvKvizovi);
         if(list == null) {
             zaFrag();
+            DobaviIzBaze dobaviIzBaze = new DobaviIzBaze(); // kad zarotiramo da dobavimo sve kategorije
+            dobaviIzBaze.delegat = this;
+            dobaviIzBaze.execute("Kategorije");
 
+            dobaviSveKvizoveizBaze();
         } else {
             spinner = (Spinner) findViewById(R.id.spPostojeceKategorije);
 
@@ -120,6 +124,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
                        dobaviSveKvizoveizBaze();
                    } else
                        new DobaviSveKvizovePoKategoriji().execute();
+
                 }
 
                 @Override
@@ -227,6 +232,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
             if (resultCode == RESULT_OK) {
                 // Get String data from Intent
                 Kviz kviz = (Kviz) data.getSerializableExtra("povratniKviz");
+                if(kviz.getPitanja().get(kviz.getPitanja().size() - 1).getNaziv().equalsIgnoreCase("Dodaj pitanje")) kviz.getPitanja().remove(kviz.getPitanja().size() - 1);
                 ArrayList<Kategorija> kategorijee = (ArrayList<Kategorija>) data.getSerializableExtra("dodaneKategorije"); // lista svih dodanih kategorija u dodajKvizAkt
                 String tip = data.getStringExtra("tip");
                 if(kategorijee != null) {
@@ -274,6 +280,16 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
         kvizovi.add(addKviz);
     }
 
+    private void dodajAddKvizNaKraj(ArrayList<Kviz> kvizevi) {
+        Kviz addKviz = new Kviz();
+        addKviz.setNaziv("Dodaj Kviz");
+        Kategorija cat1 = new Kategorija();
+        cat1.setNaziv("Dodaj kviz");
+        cat1.setId("1");
+        addKviz.setKategorija(cat1);
+        kvizevi.add(addKviz);
+    }
+
     @Override
     public void dodajKviz(int position) {
         dodajIzmijeniKviz(position);
@@ -285,21 +301,18 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
     }
 
     @Override
-    public void filtriraj(String kategorija, int pozicija) {
-        if (!kategorija.equals("Svi")) {
-            detailFrag.getAdapter().getFilter().filter(kategorije.get(pozicija).getNaziv());
-        } else {
-            detailFrag.getAdapter().setKat(svi);
-            detailFrag.getAdapter().getFilter().filter(kategorije.get(pozicija).getNaziv());
-        }
+    public void filtriraj(Kategorija kategorija) {
+        odabranaKategorijaUSpineru = kategorija;
+        if(kategorija.getNaziv().equals("Svi")) {
+            dobaviSveKvizoveizBaze();
+        } else
+            new DobaviSveKvizovePoKategoriji().execute();
     }
 
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
-
         savedInstanceState.putSerializable("kvizovi", kvizovi);
         savedInstanceState.putSerializable("kategorije", kategorije);
-
         super.onSaveInstanceState(savedInstanceState);
     }
 
@@ -318,7 +331,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
     }
 
 
-    private class DobaviIzBaze extends AsyncTask<String, Integer, ArrayList<?>> {
+    public class DobaviIzBaze extends AsyncTask<String, Integer, ArrayList<?>> {
         public Interfejsi.IDobaviKvizove delegat = null;
         protected  ArrayList<?> doInBackground(String... urls) {//prvi param kolekcija drugi id dokumenta
             InputStream is = getResources().openRawResource(R.raw.secret);
@@ -370,6 +383,30 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
         protected void onPostExecute( ArrayList<?> lista) {
             if(lista.size() != 0)
                 delegat.processFinish(lista);
+        }
+    }
+
+    @Override
+    public void processFinish(ArrayList<?> output) {
+        if(output.get(0).getClass() == Kategorija.class) {
+            ArrayList<Kategorija> kategorijas = (ArrayList<Kategorija>) output;
+            kategorije.clear();
+            dodajSviKategorijuUSpinner();
+            kategorije.addAll(kategorijas);
+            if(listaFrag != null) {
+                listaFrag.dodajSveKategorije();
+            }
+            if(adapterSpinner != null) adapterSpinner.notifyDataSetChanged();
+        } else {
+            ArrayList<Kviz> kviz = (ArrayList<Kviz>) output;
+            kvizovi.clear();
+            kvizovi.addAll( kviz);
+            dodajAddKvizNaKraj();
+            dodajAddKvizNaKraj(kviz);
+            if(detailFrag != null) {
+                detailFrag.dodajSveKvizove(kviz);
+            }
+            if(adapter != null) adapter.notifyDataSetChanged();
         }
     }
 
@@ -445,7 +482,9 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
             kvizovi.clear();
             dodajAddKvizNaKraj();
             kvizovi.addAll(kvizovi.size() - 1, kvizs);
-            adapter.notifyDataSetChanged();
+            dodajAddKvizNaKraj(kvizs);
+            if(adapter != null) adapter.notifyDataSetChanged();
+            if(detailFrag != null) detailFrag.dodajSveKvizove(kvizs);
         }
     }
 
@@ -498,21 +537,6 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
             if(pitanjaIdevi.contains(p.getId()))
                 pitanja.add(p);
             return  pitanja;
-    }
-
-    @Override
-    public void processFinish(ArrayList<?> output) {
-        if(output.get(0).getClass() == Kategorija.class) {
-            ArrayList<Kategorija> kategorijas = (ArrayList<Kategorija>) output;
-            kategorije.clear();
-            dodajSviKategorijuUSpinner();
-            kategorije.addAll(kategorijas);
-            adapterSpinner.notifyDataSetChanged();
-        } else {
-            ArrayList<Kviz> kviz = (ArrayList<Kviz>) output;
-            kvizovi.addAll(kvizovi.size() - 1, kviz);
-            adapter.notifyDataSetChanged();
-        }
     }
 
     public static ArrayList<Kategorija> ucitajSveKategorijeIzBaze(JSONArray items) {
