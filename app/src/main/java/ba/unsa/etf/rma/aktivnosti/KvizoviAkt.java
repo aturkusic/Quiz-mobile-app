@@ -75,7 +75,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
     private Kategorija kategorijaKvizaKojiSeDodaje;
     private static final int PERMISSION_REQUEST_CODE = 1;
     private double vrijemeDoEventa;
-    private boolean perm = true;
+    private boolean perm = true; // permisija za kalendar
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,7 +83,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
         setContentView(R.layout.kvizovi_akt);
 
         GlavnaKlasa = this;
-        checkPermissions(PERMISSION_REQUEST_CODE, Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR);
+        checkPermissions(PERMISSION_REQUEST_CODE, Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR); // dopustenje za pristup kalendaru telefona
 
         if(kvizovi.size() == 0 || !kvizovi.get(kvizovi.size() - 1).getNaziv().equalsIgnoreCase("dodaj kviz"))
             dodajAddKvizNaKraj();

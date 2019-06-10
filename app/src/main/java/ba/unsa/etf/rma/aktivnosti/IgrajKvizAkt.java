@@ -1,7 +1,15 @@
 package ba.unsa.etf.rma.aktivnosti;
 
 
+import android.app.AlarmManager;
+import android.app.AlertDialog;
 import android.app.FragmentManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.provider.AlarmClock;
 import android.support.annotation.Nullable;
@@ -12,6 +20,8 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import java.util.Calendar;
 
 import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.fragmenti.InformacijeFrag;
@@ -29,6 +39,9 @@ public class IgrajKvizAkt extends AppCompatActivity implements PitanjeFrag.Pitan
     private  Kviz kviz;
     FragmentManager fm;
     FrameLayout ldetalji;
+    AlarmManager manager;
+    BroadcastReceiver receiver;
+    PendingIntent pintent;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -40,13 +53,6 @@ public class IgrajKvizAkt extends AppCompatActivity implements PitanjeFrag.Pitan
         fm = getFragmentManager();
 
         ldetalji = (FrameLayout)findViewById(R.id.pitanjePlace);
-
-//        Intent i = new Intent(AlarmClock.ACTION_SET_ALARM);
-//        i.putExtra(AlarmClock.EXTRA_MESSAGE, "ALARM NAME");
-//        i.putExtra(AlarmClock.EXTRA_HOUR, 0);
-//        i.putExtra(AlarmClock.EXTRA_MINUTES, 1 );
-//        i.putExtra(AlarmClock.EXTRA_SKIP_UI, true);//true if you want to set the Alarm without leaving your activity
-//        startActivity(i);
 
         if(ldetalji != null){
             pitanjeFrag = (PitanjeFrag)fm.findFragmentById(R.id.pitanjePlace);
@@ -71,6 +77,40 @@ public class IgrajKvizAkt extends AppCompatActivity implements PitanjeFrag.Pitan
             fm.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
         }
 
+        if(kviz.getPitanja().size() != 0) {
+            Calendar cal = Calendar.getInstance();
+            cal.add(Calendar.SECOND, (int) ((kviz.getPitanja().size() / 2.) * 60));
+
+            receiver = dajBroadcastReceiver();
+
+            this.registerReceiver(receiver, new IntentFilter("nesto"));
+
+            pintent = PendingIntent.getBroadcast(this, 0, new Intent("nesto"), 0);
+            manager = (AlarmManager) (this.getSystemService(Context.ALARM_SERVICE));
+
+            manager.set(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), pintent);
+        }
+
+    }
+
+    private BroadcastReceiver dajBroadcastReceiver() {
+        BroadcastReceiver receiver = new BroadcastReceiver() {
+            @Override public void onReceive( Context context, Intent _ )
+            {
+                AlertDialog alertDialog = new AlertDialog.Builder(context).create();
+                alertDialog.setTitle("Alert");
+                alertDialog.setMessage("Isteklo vrijeme!!!");
+                alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                                finish();
+                            }
+                        });
+                alertDialog.show();
+            }
+        };
+        return receiver;
     }
 
     @Override
@@ -80,6 +120,7 @@ public class IgrajKvizAkt extends AppCompatActivity implements PitanjeFrag.Pitan
 
     @Override
     public void kvizZavrsen(Double postotakTacnih) {
+        manager.cancel(pintent);
         if(rangListaFrag == null) {
             rangListaFrag = new RangLista();
             Bundle argumenti=new Bundle();
