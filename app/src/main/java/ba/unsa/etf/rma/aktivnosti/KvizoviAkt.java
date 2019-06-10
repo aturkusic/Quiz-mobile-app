@@ -1,10 +1,19 @@
 package ba.unsa.etf.rma.aktivnosti;
 
 
+import android.Manifest;
+import android.app.AlertDialog;
 import android.app.FragmentManager;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -17,7 +26,6 @@ import android.widget.Spinner;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.common.collect.Lists;
 
-import org.apache.http.client.methods.HttpPost;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -31,7 +39,9 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.concurrent.ExecutionException;
 
 import ba.unsa.etf.rma.fragmenti.DetailFrag;
@@ -43,6 +53,8 @@ import ba.unsa.etf.rma.adapteri.ListaAdapter;
 import ba.unsa.etf.rma.klase.Pitanje;
 import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.adapteri.SpinerAdapter;
+
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomunikacijuSaBaznom, ListaFrag.Filtriranje, Interfejsi.IDobaviKvizove {
     private static final int SECOND_ACTIVITY_REQUEST_CODE = 0;
@@ -61,7 +73,9 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
     private SpinerAdapter adapterSpinner;
     private ArrayList<Pitanje> listaSvaPitanja = new ArrayList<>();
     private Kategorija kategorijaKvizaKojiSeDodaje;
-
+    private static final int PERMISSION_REQUEST_CODE = 1;
+    private double vrijemeDoEventa;
+    private boolean perm = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,7 +83,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
         setContentView(R.layout.kvizovi_akt);
 
         GlavnaKlasa = this;
-
+        checkPermissions(PERMISSION_REQUEST_CODE, Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR);
 
         if(kvizovi.size() == 0 || !kvizovi.get(kvizovi.size() - 1).getNaziv().equalsIgnoreCase("dodaj kviz"))
             dodajAddKvizNaKraj();
@@ -101,7 +115,19 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
 
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    pokreniKviz(position);
+                    if(daLiIMaEventPrijeVremena((int)((kvizovi.get(position).getPitanja().size() / 2.) * 60)) && perm) {
+                        AlertDialog alertDialog = new AlertDialog.Builder(KvizoviAkt.this).create();
+                        alertDialog.setTitle("Alert");
+                        alertDialog.setMessage("Imate događaj u kalendaru za " + vrijemeDoEventa + " minuta!”");
+                        alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.dismiss();
+                                    }
+                                });
+                        alertDialog.show();
+                    }
+                    else if(perm) pokreniKviz(position);
                 }
             });
 
@@ -132,6 +158,51 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
 
                 }
             });
+        }
+    }
+
+    private boolean daLiIMaEventPrijeVremena(int vrijemeUSekundama) {
+        if (perm) {
+            Cursor cursor = getContentResolver().query(
+                    Uri.parse("content://com.android.calendar/events"), new String[]{"title", "dtstart"}, null, null, null);
+            cursor.moveToFirst();
+            String CNames[] = new String[cursor.getCount()];
+
+            long trenutnoPlusBrojPitanja = System.currentTimeMillis() + vrijemeUSekundama * 1000;
+
+            for (int i = 0; i < CNames.length; i++) {
+                Long datum = Long.parseLong(cursor.getString(1));
+                if (datum > System.currentTimeMillis() && datum < trenutnoPlusBrojPitanja) {
+                    vrijemeDoEventa = (datum - System.currentTimeMillis()) / 60000.;
+                    return true;
+                }
+                CNames[i] = cursor.getString(0);
+                cursor.moveToNext();
+
+            }
+        }
+        return false;
+    }
+
+    private boolean checkPermissions(int callbackId, String... permissionsId) {
+        boolean permissions = true;
+        for (String p : permissionsId) {
+            permissions = permissions && ContextCompat.checkSelfPermission(this, p) == PERMISSION_GRANTED;
+        }
+
+        if (!permissions)
+            ActivityCompat.requestPermissions(this, permissionsId, callbackId);
+        return permissions;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if(requestCode == PERMISSION_REQUEST_CODE) {
+            if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                perm = true;
+            } else {
+                perm = false;
+            }
         }
     }
 

@@ -1,9 +1,9 @@
 package ba.unsa.etf.rma.aktivnosti;
 
-import android.app.AlertDialog;
+
 import android.app.FragmentManager;
-import android.content.DialogInterface;
 import android.os.Bundle;
+import android.provider.AlarmClock;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
@@ -40,6 +40,13 @@ public class IgrajKvizAkt extends AppCompatActivity implements PitanjeFrag.Pitan
         fm = getFragmentManager();
 
         ldetalji = (FrameLayout)findViewById(R.id.pitanjePlace);
+
+//        Intent i = new Intent(AlarmClock.ACTION_SET_ALARM);
+//        i.putExtra(AlarmClock.EXTRA_MESSAGE, "ALARM NAME");
+//        i.putExtra(AlarmClock.EXTRA_HOUR, 0);
+//        i.putExtra(AlarmClock.EXTRA_MINUTES, 1 );
+//        i.putExtra(AlarmClock.EXTRA_SKIP_UI, true);//true if you want to set the Alarm without leaving your activity
+//        startActivity(i);
 
         if(ldetalji != null){
             pitanjeFrag = (PitanjeFrag)fm.findFragmentById(R.id.pitanjePlace);
