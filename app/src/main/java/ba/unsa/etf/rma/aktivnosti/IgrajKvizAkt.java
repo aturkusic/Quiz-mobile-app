@@ -93,6 +93,11 @@ public class IgrajKvizAkt extends AppCompatActivity implements PitanjeFrag.Pitan
 
     }
 
+    @Override
+    public void onBackPressed() {
+        manager.cancel(pintent);
+    }
+
     private BroadcastReceiver dajBroadcastReceiver() {
         BroadcastReceiver receiver = new BroadcastReceiver() {
             @Override public void onReceive( Context context, Intent _ )
