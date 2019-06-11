@@ -4,8 +4,10 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -47,6 +49,7 @@ import ba.unsa.etf.rma.adapteri.ListaPitanjaAdapter;
 import ba.unsa.etf.rma.klase.Pitanje;
 import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.klase.Rang;
+import ba.unsa.etf.rma.ostalo.ConnectivityReceiver;
 import ba.unsa.etf.rma.ostalo.Trojka;
 
 public class DodajKvizAkt extends AppCompatActivity {
@@ -72,7 +75,9 @@ public class DodajKvizAkt extends AppCompatActivity {
     Button dugme;
     Button importujBtn;
     String stariId;
+    boolean online = true;
     private Rang rangZaIzmijenit = new Rang();
+    private ConnectivityReceiver receiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,6 +91,12 @@ public class DodajKvizAkt extends AppCompatActivity {
         spinner = (Spinner) findViewById(R.id.spKategorije);
         dugme = (Button) findViewById(R.id.btnDodajKviz);
         importujBtn = (Button) findViewById(R.id.btnImportKviz);
+
+        receiver = new ConnectivityReceiver();
+
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        this.registerReceiver(receiver, intentFilter);
 
 
         //dobavljanje podataka putem intenta i postavljanje default vrijednosti kao eleent liste za dodavanje pitanja
@@ -129,15 +140,17 @@ public class DodajKvizAkt extends AppCompatActivity {
         listaPitanja.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (position != pitanja.size() - 1) {
-                    listaMogucih.add(pitanja.remove(position));
-                    adapter.notifyDataSetChanged();
-                    adapterMogucihPitanja.notifyDataSetChanged();
-                } else {
+                if (position == pitanja.size() - 1 && online) {
                     Intent intent = new Intent(DodajKvizAkt.this, DodajPitanjeAkt.class);
                     intent.putExtra("pitanje", pitanja.get(position));
                     intent.putExtra("pitanja", pitanja);
                     startActivityForResult(intent, SECOND_ACTIVITY_REQUEST_CODE);
+                } else if(position == pitanja.size() - 1 && !online) {
+                    Toast.makeText(DodajKvizAkt.this, "Offline ste!", Toast.LENGTH_LONG).show();
+                } else {
+                    listaMogucih.add(pitanja.remove(position));
+                    adapter.notifyDataSetChanged();
+                    adapterMogucihPitanja.notifyDataSetChanged();
                 }
             }
         });
@@ -154,11 +167,14 @@ public class DodajKvizAkt extends AppCompatActivity {
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (position == kategorije.size() - 1) {
+                if (position == kategorije.size() - 1 && online) {
                     spinner.setSelection(0);
                     Intent intent = new Intent(DodajKvizAkt.this, DodajKategorijuAkt.class);
                     intent.putExtra("kategorije", kategorije);
                     startActivityForResult(intent, SECOND_ACTIVITY_REQUEST_CODE1);
+                } else if (position == kategorije.size() - 1 && !online) {
+                    spinner.setSelection(0);
+                    Toast.makeText(DodajKvizAkt.this, "Offline ste!", Toast.LENGTH_LONG).show();
                 }
             }
 
@@ -232,6 +248,20 @@ public class DodajKvizAkt extends AppCompatActivity {
             povratni.putExtra("tip", svrha);
             setResult(Activity.RESULT_OK, povratni);
             finish();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(receiver);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        this.registerReceiver(receiver, intentFilter);
     }
 
     @Override
@@ -428,6 +458,10 @@ public class DodajKvizAkt extends AppCompatActivity {
 
     public void setKviz(Kviz kviz) {
         this.kviz = kviz;
+    }
+
+    public void setOnline(boolean online) {
+        this.online = online;
     }
 
     private class DobaviMogucaPitanja extends AsyncTask<String, Integer, ArrayList<Pitanje>> {

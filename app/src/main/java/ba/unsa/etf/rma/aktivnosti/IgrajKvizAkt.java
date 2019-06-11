@@ -82,7 +82,6 @@ public class IgrajKvizAkt extends AppCompatActivity implements PitanjeFrag.Pitan
             cal.add(Calendar.SECOND, (int) ((kviz.getPitanja().size() / 2.) * 60));
 
             receiver = dajBroadcastReceiver();
-
             this.registerReceiver(receiver, new IntentFilter("nesto"));
 
             pintent = PendingIntent.getBroadcast(this, 0, new Intent("nesto"), 0);
@@ -95,7 +94,11 @@ public class IgrajKvizAkt extends AppCompatActivity implements PitanjeFrag.Pitan
 
     @Override
     public void onBackPressed() {
-        manager.cancel(pintent);
+        if(manager != null)
+            manager.cancel(pintent);
+        super.onBackPressed();
+        if(kviz.getPitanja().size() != 0)
+            unregisterReceiver(receiver);
     }
 
     private BroadcastReceiver dajBroadcastReceiver() {
@@ -125,7 +128,8 @@ public class IgrajKvizAkt extends AppCompatActivity implements PitanjeFrag.Pitan
 
     @Override
     public void kvizZavrsen(Double postotakTacnih) {
-        manager.cancel(pintent);
+        if(manager != null)
+            manager.cancel(pintent);
         if(rangListaFrag == null) {
             rangListaFrag = new RangLista();
             Bundle argumenti=new Bundle();

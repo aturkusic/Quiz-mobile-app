@@ -4,12 +4,17 @@ package ba.unsa.etf.rma.aktivnosti;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.app.FragmentManager;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
 import android.net.Uri;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -22,6 +27,7 @@ import android.widget.AdapterView;
 import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.common.collect.Lists;
@@ -39,9 +45,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.concurrent.ExecutionException;
 
 import ba.unsa.etf.rma.fragmenti.DetailFrag;
@@ -53,6 +57,7 @@ import ba.unsa.etf.rma.adapteri.ListaAdapter;
 import ba.unsa.etf.rma.klase.Pitanje;
 import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.adapteri.SpinerAdapter;
+import ba.unsa.etf.rma.ostalo.ConnectivityReceiver;
 
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
@@ -75,8 +80,10 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
     private Kategorija kategorijaKvizaKojiSeDodaje;
     private static final int PERMISSION_REQUEST_CODE = 1;
     private double vrijemeDoEventa;
+    boolean online = true;
+    private double vrijemeDoZavrsetkaEventaKojiTraje;
     private boolean perm = true; // permisija za kalendar
-
+    private  ConnectivityReceiver receiver;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -91,6 +98,11 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
         odabranaKategorijaUSpineru = svi;
         Resources res = getResources();
 
+        receiver = new ConnectivityReceiver();
+
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        this.registerReceiver(receiver, intentFilter);
 
         final ListView list = (ListView) findViewById(R.id.lvKvizovi);
         if(list == null) {
@@ -115,10 +127,14 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
 
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    if(daLiIMaEventPrijeVremena((int)((kvizovi.get(position).getPitanja().size() / 2.) * 60)) && perm) {
+                    if(kvizovi.get(position).getPitanja().size() != 0 && daLiIMaEventPrijeVremena((int)((kvizovi.get(position).getPitanja().size() / 2.) * 60)) && perm) {
                         AlertDialog alertDialog = new AlertDialog.Builder(KvizoviAkt.this).create();
                         alertDialog.setTitle("Alert");
-                        alertDialog.setMessage("Imate događaj u kalendaru za " + vrijemeDoEventa + " minuta!”");
+                        if(vrijemeDoEventa == 0) {
+                            alertDialog.setMessage("Imate događaj u kalendaru koji zavrsava za " + vrijemeDoZavrsetkaEventaKojiTraje + " minuta!");
+                        } else {
+                            alertDialog.setMessage("Imate događaj u kalendaru za " + vrijemeDoEventa + " minuta!");
+                        }
                         alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
                                 new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int which) {
@@ -134,7 +150,12 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
             list.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
                 @Override
                 public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                    return dodajIzmijeniKviz(position);
+                    if(online)
+                        return dodajIzmijeniKviz(position);
+                    else {
+                        Toast.makeText(KvizoviAkt.this, "Offline ste!", Toast.LENGTH_LONG).show();
+                        return true;
+                    }
                 }
             });
 
@@ -161,19 +182,60 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
         }
     }
 
+    private boolean checkWifiOnAndConnected() {
+        WifiManager wifiMgr = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE); /////////////////////koristi kasnije
+        if (wifiMgr.isWifiEnabled()) { // Wi-Fi adapter is ON
+            WifiInfo wifiInfo = wifiMgr.getConnectionInfo();
+            if( wifiInfo.getNetworkId() == -1 ){
+                return false; // Not connected to an access point
+            }
+            return true; // Connected to an access point
+        }
+        else {
+            return false; // Wi-Fi adapter is OFF
+        }
+    }
+
+    public void setOnline(boolean offline) {
+        this.online = offline;
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(receiver);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        this.registerReceiver(receiver, intentFilter);
+    }
+
     private boolean daLiIMaEventPrijeVremena(int vrijemeUSekundama) {
         if (perm) {
             Cursor cursor = getContentResolver().query(
-                    Uri.parse("content://com.android.calendar/events"), new String[]{"title", "dtstart"}, null, null, null);
+                    Uri.parse("content://com.android.calendar/events"), new String[]{"title", "dtstart", "dtend"}, "deleted != 1", null, null);
             cursor.moveToFirst();
             String CNames[] = new String[cursor.getCount()];
 
-            long trenutnoPlusBrojPitanja = System.currentTimeMillis() + vrijemeUSekundama * 1000;
+            long trenutnoVrijeme = System.currentTimeMillis();
+
+            long trenutnoPlusBrojPitanja = trenutnoVrijeme + vrijemeUSekundama * 1000;
+
 
             for (int i = 0; i < CNames.length; i++) {
-                Long datum = Long.parseLong(cursor.getString(1));
-                if (datum > System.currentTimeMillis() && datum < trenutnoPlusBrojPitanja) {
-                    vrijemeDoEventa = (datum - System.currentTimeMillis()) / 60000.;
+                Long datumPocetka = Long.parseLong(cursor.getString(1));
+                Long datumKraja = Long.parseLong(cursor.getString(2));
+                if(datumPocetka < trenutnoVrijeme && datumKraja > trenutnoVrijeme) {
+                    vrijemeDoZavrsetkaEventaKojiTraje = ( datumKraja - trenutnoVrijeme )/ 60000.;
+                    vrijemeDoEventa = 0;
+                    return true;
+                } else if (datumPocetka > trenutnoVrijeme && datumPocetka < trenutnoPlusBrojPitanja) {
+                    vrijemeDoEventa = (datumPocetka - trenutnoVrijeme) / 60000.;
+                    vrijemeDoZavrsetkaEventaKojiTraje = 0;
                     return true;
                 }
                 CNames[i] = cursor.getString(0);
