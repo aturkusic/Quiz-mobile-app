@@ -24,6 +24,7 @@ public class ConnectivityReceiver extends BroadcastReceiver {
         if(isConnected) {
             if(kA != null) {
                 kA.setOnline(true);
+                kA.azurirajPodatkeULokalnojBazi();
             } else {
                 dKA.setOnline(true);
             }

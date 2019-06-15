@@ -12,6 +12,8 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -58,6 +60,7 @@ import ba.unsa.etf.rma.klase.Pitanje;
 import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.adapteri.SpinerAdapter;
 import ba.unsa.etf.rma.ostalo.ConnectivityReceiver;
+import ba.unsa.etf.rma.ostalo.KvizoviDBOpenHelper;
 
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
@@ -84,6 +87,8 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
     private double vrijemeDoZavrsetkaEventaKojiTraje;
     private boolean perm = true; // permisija za kalendar
     private  ConnectivityReceiver receiver;
+    private KvizoviDBOpenHelper baza = new KvizoviDBOpenHelper(this);
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -100,6 +105,8 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
 
         receiver = new ConnectivityReceiver();
 
+        online = daLiImaKonekcije();
+
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         this.registerReceiver(receiver, intentFilter);
@@ -107,11 +114,16 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
         final ListView list = (ListView) findViewById(R.id.lvKvizovi);
         if(list == null) {
             zaFrag();
-            DobaviIzBaze dobaviIzBaze = new DobaviIzBaze(); // kad zarotiramo da dobavimo sve kategorije
-            dobaviIzBaze.delegat = this;
-            dobaviIzBaze.execute("Kategorije");
+            if(online) {
+                DobaviIzBaze dobaviIzBaze = new DobaviIzBaze(); // kad zarotiramo da dobavimo sve kategorije
+                dobaviIzBaze.delegat = this;
+                dobaviIzBaze.execute("Kategorije");
 
-            dobaviSveKvizoveizBaze();
+                dobaviSveKvizoveizBaze();
+            } else {
+                kvizovi.addAll(baza.dobaviSveKvizoveIzLokalneBaze());
+                kategorije.addAll(baza.dobaviSveKategorijeIzLokalneBaze());
+            }
         } else {
             spinner = (Spinner) findViewById(R.id.spPostojeceKategorije);
 
@@ -159,18 +171,38 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
                 }
             });
 
-            DobaviIzBaze dobaviIzBaze = new DobaviIzBaze();
-            dobaviIzBaze.delegat = this;
-            dobaviIzBaze.execute("Kategorije");
+            if(online) {
+                DobaviIzBaze dobaviIzBaze = new DobaviIzBaze();
+                dobaviIzBaze.delegat = this;
+                dobaviIzBaze.execute("Kategorije");
+            } else {
+                kvizovi.clear();
+                kvizovi.addAll(baza.dobaviSveKvizoveIzLokalneBaze());
+                dodajAddKvizNaKraj();
+                adapter.notifyDataSetChanged();
+                kategorije.addAll(baza.dobaviSveKategorijeIzLokalneBaze());
+                adapterSpinner.notifyDataSetChanged();
+            }
+
+           //baza.ucitajNEsto();
 
             spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
                 public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                    odabranaKategorijaUSpineru =  (Kategorija) spinner.getSelectedItem();
-                   if(odabranaKategorijaUSpineru.getNaziv().equalsIgnoreCase("Svi")) {
-                       dobaviSveKvizoveizBaze();
-                   } else
-                       new DobaviSveKvizovePoKategoriji().execute();
+                   if(online) {
+                       if (odabranaKategorijaUSpineru.getNaziv().equalsIgnoreCase("Svi")) {
+                           dobaviSveKvizoveizBaze();
+                       } else
+                           new DobaviSveKvizovePoKategoriji().execute();
+                   } else {
+                       if(!odabranaKategorijaUSpineru.getNaziv().equals("Svi")) {
+                           ((ListaAdapter) adapter).getFilter().filter(kategorije.get(position).getNaziv());
+                       } else {
+                           ((ListaAdapter) adapter).setKat(svi);
+                           ((ListaAdapter) adapter).getFilter().filter(kategorije.get(position).getNaziv());
+                       }
+                   }
 
                 }
 
@@ -179,20 +211,6 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
 
                 }
             });
-        }
-    }
-
-    private boolean checkWifiOnAndConnected() {
-        WifiManager wifiMgr = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE); /////////////////////koristi kasnije
-        if (wifiMgr.isWifiEnabled()) { // Wi-Fi adapter is ON
-            WifiInfo wifiInfo = wifiMgr.getConnectionInfo();
-            if( wifiInfo.getNetworkId() == -1 ){
-                return false; // Not connected to an access point
-            }
-            return true; // Connected to an access point
-        }
-        else {
-            return false; // Wi-Fi adapter is OFF
         }
     }
 
@@ -212,6 +230,23 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         this.registerReceiver(receiver, intentFilter);
+
+        if(online)
+            azurirajPodatkeULokalnojBazi();
+    }
+
+    public void azurirajPodatkeULokalnojBazi() {
+        DobaviIzBaze dobaviIzBaze = new DobaviIzBaze();
+        dobaviIzBaze.delegat = this;
+        dobaviIzBaze.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "Kategorije", "prvi");
+
+        DobaviIzBaze dobaviIzBaze1 = new DobaviIzBaze();
+        dobaviIzBaze1.delegat = this;
+        dobaviIzBaze1.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "Kvizovi", "prvi");
+
+        DobaviIzBaze dobaviIzBaze2 = new DobaviIzBaze();
+        dobaviIzBaze2.delegat = this;
+        dobaviIzBaze2.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "Pitanja", "prvi");
     }
 
     private boolean daLiIMaEventPrijeVremena(int vrijemeUSekundama) {
@@ -244,6 +279,16 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
             }
         }
         return false;
+    }
+
+    private boolean daLiImaKonekcije() {
+        final ConnectivityManager connectivityManager = (ConnectivityManager)this.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        final Network network = connectivityManager.getActiveNetwork();
+        final NetworkCapabilities capabilities = connectivityManager
+                .getNetworkCapabilities(network);
+
+        return capabilities != null && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
     }
 
     private boolean checkPermissions(int callbackId, String... permissionsId) {
@@ -436,10 +481,19 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
     @Override
     public void filtriraj(Kategorija kategorija) {
         odabranaKategorijaUSpineru = kategorija;
-        if(kategorija.getNaziv().equals("Svi")) {
-            dobaviSveKvizoveizBaze();
-        } else
-            new DobaviSveKvizovePoKategoriji().execute();
+        if(online) {
+            if (kategorija.getNaziv().equals("Svi")) {
+                dobaviSveKvizoveizBaze();
+            } else
+                new DobaviSveKvizovePoKategoriji().execute();
+        } else {
+            if(!odabranaKategorijaUSpineru.getNaziv().equals("Svi")) {
+                (detailFrag.getAdapter()).getFilter().filter(kategorija.getNaziv());
+            } else {
+                (detailFrag.getAdapter()).setKat(svi);
+                (detailFrag.getAdapter()).getFilter().filter(kategorija.getNaziv());
+            }
+        }
     }
 
     @Override
@@ -463,6 +517,10 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
         }
     }
 
+    public boolean isOnline() {
+        return online;
+    }
+
 
     public class DobaviIzBaze extends AsyncTask<String, Integer, ArrayList<?>> {
         public Interfejsi.IDobaviKvizove delegat = null;
@@ -480,7 +538,10 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
             ArrayList<?> lista = new ArrayList<>();
             if(urls.length == 1)
                 url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "?access_token=" + TOKEN;
-            else url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "/" + urls[1] + "?access_token=" + TOKEN;
+            else if(urls[1].equals("prvi"))
+                url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "?access_token=" + TOKEN;
+            else
+                url1 = "https://firestore.googleapis.com/v1/projects/rma19turkusicarslan73/databases/(default)/documents/" + urls[0] + "/" + urls[1] + "?access_token=" + TOKEN;
             URL url;
             try {
                 url = new URL(url1);
@@ -493,14 +554,25 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
                 if(urls[0].equalsIgnoreCase("Kvizovi")) {
                     items = jo.getJSONArray("documents");
                     lista = ucitajKvizoveOdabraneKategorije(items, 1);
+                    if(urls.length > 1) {
+                        ArrayList<Kviz> kvizovi = (ArrayList<Kviz>) lista;
+                        baza.ubaciSveKvizoveUBazu(kvizovi);
+                    }
                 } else if(urls.length == 3 && urls[2].equalsIgnoreCase("Kategorija")) {
                     kategorijaKvizaKojiSeDodaje = ucitajKategoriju(jo);
                 } else if(urls[0].equalsIgnoreCase("Kategorije")) {
                     items = jo.getJSONArray("documents");
                     lista = ucitajSveKategorijeIzBaze(items);
+                    if(urls.length > 1) {
+                        ArrayList<Kategorija> kategorijas = (ArrayList<Kategorija>) lista;
+                        baza.ubaciSveKategorijeUBazu(kategorijas);
+                    }
                 } else if(urls[0].equalsIgnoreCase("Pitanja")) {
                     items = jo.getJSONArray("documents");
                     listaSvaPitanja = DodajKvizAkt.ucitajSvaPitanjaIzBaze(items);
+                    if(urls.length > 1) {
+                        baza.ubaciSvaPitanjaUBazu(listaSvaPitanja);
+                    }
                 }
             } catch (MalformedURLException e) {
                 e.printStackTrace();
@@ -652,7 +724,9 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
                         kategorijaKvizaKojiSeDodaje = k;
                     }
                 }
-                kvizoviIzBaze.add(new Kviz(naziv, dajOdgovarajucaPitanja(pitanjaIdevi), kategorijaKvizaKojiSeDodaje));
+                Kviz kvizz = new Kviz(naziv, dajOdgovarajucaPitanja(pitanjaIdevi), kategorijaKvizaKojiSeDodaje);
+                kvizz.hashCode();
+                kvizoviIzBaze.add(kvizz);
             }
         } catch (JSONException e) {
             e.printStackTrace();

@@ -103,7 +103,7 @@ public class IgrajKvizAkt extends AppCompatActivity implements PitanjeFrag.Pitan
 
     private BroadcastReceiver dajBroadcastReceiver() {
         BroadcastReceiver receiver = new BroadcastReceiver() {
-            @Override public void onReceive( Context context, Intent _ )
+            @Override public void onReceive( Context context, Intent intent )
             {
                 AlertDialog alertDialog = new AlertDialog.Builder(context).create();
                 alertDialog.setTitle("Alert");

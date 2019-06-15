@@ -63,10 +63,14 @@ public class Pitanje implements Serializable {
         this.tacanOdgovor = tacanOdgovor;
     }
 
-    public ArrayList<String> dajRandomOdgovore() {
-        ArrayList<String> izmjesano = new ArrayList<>(odgovori);
-        Collections.shuffle(izmjesano);
-        return izmjesano;
+    public String dajOdgovoreKaoString() {
+        String rez = "";
+        int i = 0;
+        for(String o : odgovori) {
+            if(i++ != odgovori.size() - 1) rez += o + ",";
+            else rez += o;
+        }
+        return rez;
     }
 
     @Override

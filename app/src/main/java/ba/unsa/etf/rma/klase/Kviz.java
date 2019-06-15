@@ -71,4 +71,14 @@ public class Kviz implements Serializable {
         id = String.valueOf(Objects.hash(naziv.toLowerCase()));
         return Integer.parseInt(id);
     }
+
+    public String dajPitanjaKaoString() {
+        String rez = "";
+        int i = 0;
+        for(Pitanje o : pitanja) {
+            if(i++ != pitanja.size() - 1) rez += o.getId() + ",";
+            else rez += o.getId();
+        }
+        return rez;
+    }
 }

@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.common.collect.Lists;
@@ -44,6 +45,7 @@ public class DetailFrag extends Fragment {
     private KvizAdapter adapter;
     private GridView grid;
     private ZaKomunikacijuSaBaznom interfejs;
+    private KvizoviAkt aktivnost;
 
     public interface ZaKomunikacijuSaBaznom {
         void dodajKviz(int position);
@@ -52,7 +54,7 @@ public class DetailFrag extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
+        aktivnost = (KvizoviAkt) getActivity();
         return inflater.inflate(R.layout.detalji_frag, container, false);
     }
 
@@ -70,14 +72,20 @@ public class DetailFrag extends Fragment {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     interfejs.igrajKviz(position);
+
                 }
             });
 
             grid.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
                 @Override
                 public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                    interfejs.dodajKviz(position);
-                    return true;
+                    if (aktivnost.isOnline()) {
+                        interfejs.dodajKviz(position);
+                        return true;
+                    } else {
+                        Toast.makeText(aktivnost, "Offline ste!", Toast.LENGTH_LONG).show();
+                        return true;
+                    }
                 }
             });
 
