@@ -2,6 +2,7 @@ package ba.unsa.etf.rma.aktivnosti;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -50,6 +51,7 @@ import ba.unsa.etf.rma.klase.Pitanje;
 import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.klase.Rang;
 import ba.unsa.etf.rma.ostalo.ConnectivityReceiver;
+import ba.unsa.etf.rma.ostalo.KvizoviDBOpenHelper;
 import ba.unsa.etf.rma.ostalo.Trojka;
 
 public class DodajKvizAkt extends AppCompatActivity {
@@ -78,6 +80,7 @@ public class DodajKvizAkt extends AppCompatActivity {
     boolean online = true;
     private Rang rangZaIzmijenit = new Rang();
     private ConnectivityReceiver receiver;
+    private KvizoviDBOpenHelper baza;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,6 +95,7 @@ public class DodajKvizAkt extends AppCompatActivity {
         dugme = (Button) findViewById(R.id.btnDodajKviz);
         importujBtn = (Button) findViewById(R.id.btnImportKviz);
 
+        baza = KvizoviDBOpenHelper.getInstance(this);
         receiver = new ConnectivityReceiver();
 
         IntentFilter intentFilter = new IntentFilter();
@@ -188,14 +192,14 @@ public class DodajKvizAkt extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Kategorija tmp = (Kategorija) spinner.getSelectedItem();
-                if(imeKviza.getText().toString().equals("")) {
+                if (imeKviza.getText().toString().equals("")) {
                     imeKviza.setHint("Ne smije biti prazno");
                     imeKviza.setBackgroundColor(Color.RED);
                     return;
-                } else if(tmp.getNaziv().equals("Svi") || tmp.getNaziv().equalsIgnoreCase("Dodaj kategoriju")) {
+                } else if (tmp.getNaziv().equals("Svi") || tmp.getNaziv().equalsIgnoreCase("Dodaj kategoriju")) {
                     Toast.makeText(DodajKvizAkt.this, "Odaberite drugu ili dodajte novu kategoriju.", Toast.LENGTH_LONG).show();
                     return;
-                } else if(imeKviza.getText().toString().equalsIgnoreCase("Dodaj kategoriju") || imeKviza.getText().toString().equalsIgnoreCase("Svi")) {
+                } else if (imeKviza.getText().toString().equalsIgnoreCase("Dodaj kategoriju") || imeKviza.getText().toString().equalsIgnoreCase("Svi")) {
                     imeKviza.setBackgroundColor(Color.RED);
                     imeKviza.setHint("Odaberite drugo ime");
                     return;
@@ -204,13 +208,14 @@ public class DodajKvizAkt extends AppCompatActivity {
                 imeKviza.setBackgroundColor(0x00000000);
                 kategorija = (Kategorija) spinner.getSelectedItem();
                 kviz = new Kviz(imeKviza.getText().toString(), pitanja, kategorija);
+                if(kviz.getPitanja().get(kviz.getPitanja().size() - 1).getNaziv().equalsIgnoreCase("Dodaj pitanje"))
+                    kviz.getPitanja().remove(kviz.getPitanja().size() - 1);
                 kviz.hashCode();
-                if(!kviz.getNaziv().equals(kvizPrijePromjene))
+                if (!kviz.getNaziv().equals(kvizPrijePromjene)) {
                     new ProvjeriDaLiPostojiKviz().execute("Kvizovi");
-                else {
-                    new DodajObrisiBaza().execute("Kvizovi", kviz.getId(), "obrisi"); // izmjena u bazi
+                } else {
                     new DodajObrisiBaza().execute("Kvizovi", kviz.getId()); // izmjena u bazi
-                    new DobaviRanglistinIDIzBaze().execute();
+                    baza.izmijeniKviz(kvizPrijePromjene, kviz);
                     Intent povratni = new Intent();
                     povratni.putExtra("povratniKviz", kviz);
                     povratni.putExtra("dodaneKategorije", kategorije);
@@ -538,11 +543,10 @@ public class DodajKvizAkt extends AppCompatActivity {
                     int i = 0;
                     dokument = "{ \"fields\": { \"pitanja\": { \"arrayValue\": { \"values\": [" ;
                     for(Pitanje p : kviz.getPitanja()) {
-                        if(i < kviz.getPitanja().size() - 2)
+                        if(i++ != kviz.getPitanja().size() - 1)
                             dokument += "{ \"stringValue\": \"" + p.getId() + "\"}, ";
-                        else if(i == kviz.getPitanja().size() - 2)
+                        else
                             dokument += "{ \"stringValue\": \"" + p.getId() + "\"} ";
-                        i++;
                     }
                     dokument += "]}}, \"naziv\": { \"stringValue\": \"" + kviz.getNaziv() + "\"}, \"idKategorije\": { \"stringValue\": \"" + kviz.getKategorija().getIdUBazi() + "\"}}}";
                 } else if(urls[0].equalsIgnoreCase("Pitanja")) {
@@ -650,6 +654,7 @@ public class DodajKvizAkt extends AppCompatActivity {
                     new DodajObrisiBaza().execute("Kvizovi", stariId, "obrisi"); // izmjena u bazi
                     new DodajObrisiBaza().execute("Kvizovi", kviz.getId()); // izmjena u bazi
                     new DobaviRanglistinIDIzBaze().execute();
+                    baza.izmijeniKviz(kvizPrijePromjene, kviz);
                 }
                 else new DodajObrisiBaza().execute("Kvizovi", kviz.getId()); // dodajem u bazu
                 Intent povratni = new Intent();
@@ -802,7 +807,7 @@ public class DodajKvizAkt extends AppCompatActivity {
                 dokument = name.getJSONObject("document");
                 rang = dokument.getJSONObject("fields");
                 String id = dokument.getString("name");
-                String id1 ="";
+                String id1 = "";
                 int duzina = 0;
                 for(int j = id.length() - 1; j > 0; j--) {
                     if(id.charAt(j) == '/') break;

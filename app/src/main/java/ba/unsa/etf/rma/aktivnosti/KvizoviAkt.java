@@ -196,6 +196,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
             }
 
            baza.ucitajNEsto();
+           baza.ucitajNEsto2();
 
             spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
@@ -420,13 +421,13 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(spinner != null) spinner.setSelection(0);
         // Check that it is the SecondActivity with an OK result
         if (requestCode == SECOND_ACTIVITY_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 // Get String data from Intent
                 Kviz kviz = (Kviz) data.getSerializableExtra("povratniKviz");
-                if(kviz != null && kviz.getPitanja()!= null && kviz.getPitanja().get(kviz.getPitanja().size() - 1).getNaziv().equalsIgnoreCase("Dodaj pitanje")) kviz.getPitanja().remove(kviz.getPitanja().size() - 1);
+                if(kviz != null && kviz.getPitanja()!= null && kviz.getPitanja().get(kviz.getPitanja().size() - 1).getNaziv().equalsIgnoreCase("Dodaj pitanje"))
+                    kviz.getPitanja().remove(kviz.getPitanja().size() - 1);
                 ArrayList<Kategorija> kategorijee = (ArrayList<Kategorija>) data.getSerializableExtra("dodaneKategorije"); // lista svih dodanih kategorija u dodajKvizAkt
                 String tip = data.getStringExtra("tip");
                 if(kategorijee != null) {
@@ -454,6 +455,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
                 }
             }
         }
+//        if(spinner != null) spinner.setSelection(0);
     }
 
     private void dodajSviKategorijuUSpinner() {
@@ -573,6 +575,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
                     if(urls.length > 1) {
                         ArrayList<Kviz> kvizovi = (ArrayList<Kviz>) lista;
                         baza.ubaciSveKvizoveUBazu(kvizovi);
+                        return new ArrayList<>();
                     }
                 } else if(urls.length == 3 && urls[2].equalsIgnoreCase("Kategorija")) {
                     kategorijaKvizaKojiSeDodaje = ucitajKategoriju(jo);
@@ -655,7 +658,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
 
     @Override
     public void processFinish(ArrayList<?> output) {
-        if(output.get(0).getClass() == Kategorija.class) {
+        if(output.size() != 0 && output.get(0).getClass() == Kategorija.class) {
             ArrayList<Kategorija> kategorijas = (ArrayList<Kategorija>) output;
             kategorije.clear();
             dodajSviKategorijuUSpinner();
@@ -664,7 +667,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
                 listaFrag.dodajSveKategorije();
             }
             if(adapterSpinner != null) adapterSpinner.notifyDataSetChanged();
-        } else {
+        } else if(output.size() != 0 && output.get(0).getClass() == Kviz.class) {
             ArrayList<Kviz> kviz = (ArrayList<Kviz>) output;
             kvizovi.clear();
             kvizovi.addAll( kviz);

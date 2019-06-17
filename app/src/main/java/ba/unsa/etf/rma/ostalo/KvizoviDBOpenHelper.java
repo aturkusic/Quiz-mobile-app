@@ -37,7 +37,7 @@ public class KvizoviDBOpenHelper extends SQLiteOpenHelper {
     private static KvizoviDBOpenHelper instanca;
 
     public static final String DATABASE_NAME = "mojaBaza.db";
-    public static final int DATABASE_VERSION = 17;
+    public static final int DATABASE_VERSION = 26;
 
     public static final String TABELA_KVIZOVI = "kvizovi";
     public static final String KVIZ_ID = "_id";
@@ -99,7 +99,7 @@ public class KvizoviDBOpenHelper extends SQLiteOpenHelper {
             RANGLISTA_MIJENJANA + " INTEGER " +
             ");";
 
-    public KvizoviDBOpenHelper(Context context) {
+    private KvizoviDBOpenHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
@@ -191,6 +191,33 @@ public class KvizoviDBOpenHelper extends SQLiteOpenHelper {
 //kada završimo sa kursorom potrebno ga je zatvoriti
         cursor.close();
 
+    }
+
+    public void ucitajNEsto2() {
+        String[] koloneRezulat = new String[]{ KVIZ_NAZIV, KVIZ_ID, KVIZ_PITANJA, KVIZ_KATEGORIJA};
+// Specificiramo WHERE dio upita
+//        String where = KVIZ_KATEGORIJA + "=127045871";
+        String where = null;
+// Definišemo argumente u where upitu, group by, having i order po potrebi
+        String whereArgs[] = null;
+        String groupBy = null;
+        String having = null;
+        String order = null;
+// Dohvatimo referencu na bazu (poslije ćemo opisati kako se implementira helper)
+        SQLiteDatabase db = this.getReadableDatabase();
+// Izvršimo upit
+        Cursor cursor = db.query(this.TABELA_KVIZOVI, koloneRezulat, where,
+                whereArgs, groupBy, having, order);
+
+        int INDEX_KOLONE_IME = cursor.getColumnIndexOrThrow(KVIZ_NAZIV);
+        int INDEX_KOLONE_id = cursor.getColumnIndexOrThrow(KVIZ_ID);
+        int INDEX_KOLONE_kategorija = cursor.getColumnIndexOrThrow(KVIZ_KATEGORIJA);
+        int INDEX_KOLONE_pitanja = cursor.getColumnIndexOrThrow(KVIZ_PITANJA);
+        while(cursor.moveToNext()){
+            Log.d("ARSLANNN", cursor.getString(INDEX_KOLONE_IME) + "  ID  "+cursor.getString(INDEX_KOLONE_id) + "  KATE  " + cursor.getString(INDEX_KOLONE_kategorija) + "   PITANJA   " + cursor.getString(INDEX_KOLONE_pitanja));
+        }
+//kada završimo sa kursorom potrebno ga je zatvoriti
+        cursor.close();
     }
 
     @Override
@@ -387,5 +414,15 @@ public class KvizoviDBOpenHelper extends SQLiteOpenHelper {
     private void staviSvePromijenjeneNaNulu() {
         SQLiteDatabase db = this.getWritableDatabase();
         db.execSQL("UPDATE " + TABELA_RANGLISTE + " SET " + RANGLISTA_MIJENJANA + "=0" + " WHERE " + RANGLISTA_MIJENJANA + "=1" );
+    }
+
+    public void izmijeniKviz(String kvizPrijePromjene, Kviz k) {
+        ContentValues noveVrijednosti = new ContentValues();
+        noveVrijednosti.put(KVIZ_ID, k.getId());
+        noveVrijednosti.put(KVIZ_NAZIV, k.getNaziv());
+        noveVrijednosti.put(KVIZ_PITANJA, k.dajPitanjaKaoString());
+        noveVrijednosti.put(KVIZ_KATEGORIJA, k.getKategorija().getIdUBazi());
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.update(KvizoviDBOpenHelper.TABELA_KVIZOVI, noveVrijednosti, "naziv=?", new String[] {kvizPrijePromjene});
     }
 }
