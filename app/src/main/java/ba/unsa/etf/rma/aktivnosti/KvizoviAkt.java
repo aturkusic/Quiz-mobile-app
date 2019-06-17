@@ -48,10 +48,12 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 
 import ba.unsa.etf.rma.fragmenti.DetailFrag;
 import ba.unsa.etf.rma.fragmenti.ListaFrag;
+import ba.unsa.etf.rma.fragmenti.RangLista;
 import ba.unsa.etf.rma.klase.Interfejsi;
 import ba.unsa.etf.rma.klase.Kategorija;
 import ba.unsa.etf.rma.klase.Kviz;
@@ -59,8 +61,10 @@ import ba.unsa.etf.rma.adapteri.ListaAdapter;
 import ba.unsa.etf.rma.klase.Pitanje;
 import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.adapteri.SpinerAdapter;
+import ba.unsa.etf.rma.klase.Rang;
 import ba.unsa.etf.rma.ostalo.ConnectivityReceiver;
 import ba.unsa.etf.rma.ostalo.KvizoviDBOpenHelper;
+import ba.unsa.etf.rma.ostalo.Trojka;
 
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
@@ -87,7 +91,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
     private double vrijemeDoZavrsetkaEventaKojiTraje;
     private boolean perm = true; // permisija za kalendar
     private  ConnectivityReceiver receiver;
-    private KvizoviDBOpenHelper baza = new KvizoviDBOpenHelper(this);
+    public static KvizoviDBOpenHelper baza;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,6 +99,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
         setContentView(R.layout.kvizovi_akt);
 
         GlavnaKlasa = this;
+        baza = KvizoviDBOpenHelper.getInstance(this);
         checkPermissions(PERMISSION_REQUEST_CODE, Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR); // dopustenje za pristup kalendaru telefona
 
         if(kvizovi.size() == 0 || !kvizovi.get(kvizovi.size() - 1).getNaziv().equalsIgnoreCase("dodaj kviz"))
@@ -106,10 +111,16 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
         receiver = new ConnectivityReceiver();
 
         online = daLiImaKonekcije();
-
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-        this.registerReceiver(receiver, intentFilter);
+        if(online) {
+            Intent intent = new Intent();
+            intent.addCategory(Intent.CATEGORY_DEFAULT);
+            intent.setAction("akcija");
+            sendBroadcast(intent);
+        } else {
+            IntentFilter intentFilter = new IntentFilter();
+            intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+            this.registerReceiver(receiver, intentFilter);
+        }
 
         final ListView list = (ListView) findViewById(R.id.lvKvizovi);
         if(list == null) {
@@ -184,7 +195,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
                 adapterSpinner.notifyDataSetChanged();
             }
 
-           //baza.ucitajNEsto();
+           baza.ucitajNEsto();
 
             spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
@@ -247,6 +258,10 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
         DobaviIzBaze dobaviIzBaze2 = new DobaviIzBaze();
         dobaviIzBaze2.delegat = this;
         dobaviIzBaze2.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "Pitanja", "prvi");
+
+        DobaviIzBaze dobaviIzBaze3 = new DobaviIzBaze();
+        dobaviIzBaze3.delegat = this;
+        dobaviIzBaze3.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "Rangliste", "prvi");
     }
 
     private boolean daLiIMaEventPrijeVremena(int vrijemeUSekundama) {
@@ -281,7 +296,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
         return false;
     }
 
-    private boolean daLiImaKonekcije() {
+    public boolean daLiImaKonekcije() {
         final ConnectivityManager connectivityManager = (ConnectivityManager)this.getSystemService(Context.CONNECTIVITY_SERVICE);
 
         final Network network = connectivityManager.getActiveNetwork();
@@ -324,6 +339,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
     private void pokreniKviz(int position) {
         Intent intent = new Intent(KvizoviAkt.this, IgrajKvizAkt.class);
         intent.putExtra("kviz", kvizovi.get(position));
+        intent.putExtra("online", online);
         if (!(position == kvizovi.size() - 1))
             startActivity(intent);
     }
@@ -573,6 +589,11 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
                     if(urls.length > 1) {
                         baza.ubaciSvaPitanjaUBazu(listaSvaPitanja);
                     }
+                } else if(urls[0].equalsIgnoreCase("Rangliste")) {
+                    items = jo.getJSONArray("documents");
+                    if(urls.length > 1) {
+                        baza.ubaciSveRangListeULokalnuBazu(ucitajSveRangListeIzBaze(items));
+                    }
                 }
             } catch (MalformedURLException e) {
                 e.printStackTrace();
@@ -589,6 +610,47 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
             if(lista.size() != 0)
                 delegat.processFinish(lista);
         }
+    }
+
+    private ArrayList<Rang> ucitajSveRangListeIzBaze(JSONArray items) {
+        ArrayList<Rang> rangoviIzBaze = new ArrayList<>();
+        try {
+            for (int i = 0; i < items.length(); i++) {
+                JSONObject name = items.getJSONObject(i);
+                JSONObject rang = new JSONObject();
+                rang = name.getJSONObject("fields");
+                String id = name.getString("name");
+                String idRangliste ="";
+                int duzina = 0;
+                for(int j = id.length() - 1; j > 0; j--) {
+                    if(id.charAt(j) == '/') break;
+                    else duzina++;
+                }
+                idRangliste = id.substring(id.length() - duzina);
+                String nazivKviza = rang.getJSONObject("nazivKviza").getString("stringValue");
+                JSONObject mapaGlavna = rang.getJSONObject("lista").getJSONObject("mapValue").getJSONObject("fields");
+                ArrayList<Trojka<Integer, String, Double>> igraci = new ArrayList<>();
+                try {
+                    int j = 1;
+                    while(true) {
+                        JSONObject mapaSporedna = mapaGlavna.getJSONObject(String.valueOf(j)).getJSONObject("mapValue").getJSONObject("fields");
+                        String nazivTakmicara = mapaSporedna.names().toString();
+                        nazivTakmicara = nazivTakmicara.replace("[", "");
+                        nazivTakmicara = nazivTakmicara.replace("]", "");
+                        nazivTakmicara = nazivTakmicara.replace("\"", "");
+                        Double procenat = mapaSporedna.getJSONObject(nazivTakmicara).getDouble("doubleValue");
+                        igraci.add(new Trojka<>(j, nazivTakmicara, procenat));
+                        j++;
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                rangoviIzBaze.add(new Rang(idRangliste, igraci, nazivKviza));
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return rangoviIzBaze;
     }
 
     @Override

@@ -42,13 +42,14 @@ public class IgrajKvizAkt extends AppCompatActivity implements PitanjeFrag.Pitan
     AlarmManager manager;
     BroadcastReceiver receiver;
     PendingIntent pintent;
-
+    private boolean online;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.fragmenti_kviz);
 
         kviz = (Kviz)getIntent().getSerializableExtra("kviz");
+        online = getIntent().getBooleanExtra("online", false);
 
         fm = getFragmentManager();
 
@@ -93,12 +94,24 @@ public class IgrajKvizAkt extends AppCompatActivity implements PitanjeFrag.Pitan
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        if(kviz.getPitanja().size() != 0)
+            unregisterReceiver(receiver);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        receiver = dajBroadcastReceiver();
+        this.registerReceiver(receiver, new IntentFilter("nesto"));
+    }
+
+    @Override
     public void onBackPressed() {
         if(manager != null)
             manager.cancel(pintent);
         super.onBackPressed();
-        if(kviz.getPitanja().size() != 0)
-            unregisterReceiver(receiver);
     }
 
     private BroadcastReceiver dajBroadcastReceiver() {
@@ -142,4 +155,11 @@ public class IgrajKvizAkt extends AppCompatActivity implements PitanjeFrag.Pitan
         }
     }
 
+    public boolean isOnline() {
+        return online;
+    }
+
+    public void setOnline(boolean online) {
+        this.online = online;
+    }
 }

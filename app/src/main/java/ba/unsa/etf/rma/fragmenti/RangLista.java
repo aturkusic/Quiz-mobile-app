@@ -35,11 +35,13 @@ import java.util.concurrent.ExecutionException;
 import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.adapteri.RangListaAdapter;
 import ba.unsa.etf.rma.aktivnosti.DodajKvizAkt;
+import ba.unsa.etf.rma.aktivnosti.IgrajKvizAkt;
 import ba.unsa.etf.rma.aktivnosti.KvizoviAkt;
 import ba.unsa.etf.rma.klase.Kategorija;
 import ba.unsa.etf.rma.klase.Kviz;
 import ba.unsa.etf.rma.klase.Pitanje;
 import ba.unsa.etf.rma.klase.Rang;
+import ba.unsa.etf.rma.ostalo.KvizoviDBOpenHelper;
 import ba.unsa.etf.rma.ostalo.RangComparator;
 import ba.unsa.etf.rma.ostalo.Trojka;
 
@@ -49,6 +51,9 @@ public class RangLista extends Fragment {
     RangListaAdapter adapter;
     double postotakTacnih;
     private String imeIgraca;
+    IgrajKvizAkt aktivnost;
+    KvizoviDBOpenHelper lokalnaBaza;
+
     Rang novi = new Rang();
     @Override
     public View onCreateView(
@@ -59,10 +64,20 @@ public class RangLista extends Fragment {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        aktivnost = (IgrajKvizAkt) getActivity();
+        lokalnaBaza = KvizoviDBOpenHelper.getInstance(getContext());
         if(getArguments().containsKey("kviz")){
             otvoriAlertDialog();
-            new DobaviRanglistuIzBaze().execute();
             kviz = (Kviz)getArguments().getSerializable("kviz");
+            if(aktivnost.isOnline())
+                new DobaviRanglistuIzBaze().execute();
+            else {
+                novi = lokalnaBaza.dajRangListuKviza(kviz.getNaziv());
+                if(novi == null) {
+                    novi = new Rang();
+                    novi.postaviRandomId();
+                }
+            }
             postotakTacnih = getArguments().getDouble("postotak");
             listaRangova = (ListView) getActivity().findViewById(R.id.rangListaLW) ;
             adapter = new RangListaAdapter(getActivity(), novi.getLista(), getResources());
@@ -88,9 +103,13 @@ public class RangLista extends Fragment {
                 for(int i = 1; i <= novi.getLista().size(); i++) {
                     novi.getLista().get(i - 1).setFirst(i);
                 }
-                if(novi.getLista().size() == 1)
-                    new DodajRangUBazu().execute("Rangliste", novi.getId(), "dodavanje");
-                else new DodajRangUBazu().execute("Rangliste", novi.getId(), "izmjena");
+                if(aktivnost.isOnline()) {
+                    if (novi.getLista().size() == 1)
+                        new DodajRangUBazu().execute("Rangliste", novi.getId(), "dodavanje");
+                    else new DodajRangUBazu().execute("Rangliste", novi.getId(), "izmjena");
+                } else {
+                    lokalnaBaza.dodajIzmijeniRangListuULokalnojBazi(novi);
+                }
                 adapter.notifyDataSetChanged();
             }
         });
