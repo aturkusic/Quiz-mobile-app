@@ -132,7 +132,7 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
 
                 dobaviSveKvizoveizBaze();
             } else {
-                kvizovi.addAll(baza.dobaviSveKvizoveIzLokalneBaze());
+                kvizovi.addAll(kvizovi.size() - 1, baza.dobaviSveKvizoveIzLokalneBaze());
                 kategorije.addAll(baza.dobaviSveKategorijeIzLokalneBaze());
             }
         } else {
@@ -194,9 +194,6 @@ public class KvizoviAkt extends AppCompatActivity implements DetailFrag.ZaKomuni
                 kategorije.addAll(baza.dobaviSveKategorijeIzLokalneBaze());
                 adapterSpinner.notifyDataSetChanged();
             }
-
-           baza.ucitajNEsto();
-           baza.ucitajNEsto2();
 
             spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
