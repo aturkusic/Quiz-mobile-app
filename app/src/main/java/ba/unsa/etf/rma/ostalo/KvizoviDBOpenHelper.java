@@ -165,61 +165,6 @@ public class KvizoviDBOpenHelper extends SQLiteOpenHelper {
         }
     }
 
-    public void ucitajNEsto() {
-        String[] koloneRezulat = new String[]{ RANGLISTA_KVIZ, RANGLISTA_ID, RANGLISTA_IGRACI, RANGLISTA_MIJENJANA};
-// Specificiramo WHERE dio upita
-//        String where = KVIZ_KATEGORIJA + "=127045871";
-        String where = null;
-// Definišemo argumente u where upitu, group by, having i order po potrebi
-        String whereArgs[] = null;
-        String groupBy = null;
-        String having = null;
-        String order = null;
-// Dohvatimo referencu na bazu (poslije ćemo opisati kako se implementira helper)
-        SQLiteDatabase db = this.getReadableDatabase();
-// Izvršimo upit
-        Cursor cursor = db.query(this.TABELA_RANGLISTE, koloneRezulat, where,
-                whereArgs, groupBy, having, order);
-
-        int INDEX_KOLONE_IME = cursor.getColumnIndexOrThrow(RANGLISTA_KVIZ);
-        int INDEX_KOLONE_id = cursor.getColumnIndexOrThrow(RANGLISTA_ID);
-        int INDEX_KOLONE_kategorija = cursor.getColumnIndexOrThrow(RANGLISTA_IGRACI);
-        int INDEX_KOLONE_pitanja = cursor.getColumnIndexOrThrow(RANGLISTA_MIJENJANA);
-        while(cursor.moveToNext()){
-            Log.d("ARSLANNN", cursor.getString(INDEX_KOLONE_IME) + "  ID  "+cursor.getString(INDEX_KOLONE_id) + "  KATE  " + cursor.getString(INDEX_KOLONE_kategorija) + "   PITANJA   " + cursor.getString(INDEX_KOLONE_pitanja));
-        }
-//kada završimo sa kursorom potrebno ga je zatvoriti
-        cursor.close();
-
-    }
-
-    public void ucitajNEsto2() {
-        String[] koloneRezulat = new String[]{ KVIZ_NAZIV, KVIZ_ID, KVIZ_PITANJA, KVIZ_KATEGORIJA};
-// Specificiramo WHERE dio upita
-//        String where = KVIZ_KATEGORIJA + "=127045871";
-        String where = null;
-// Definišemo argumente u where upitu, group by, having i order po potrebi
-        String whereArgs[] = null;
-        String groupBy = null;
-        String having = null;
-        String order = null;
-// Dohvatimo referencu na bazu (poslije ćemo opisati kako se implementira helper)
-        SQLiteDatabase db = this.getReadableDatabase();
-// Izvršimo upit
-        Cursor cursor = db.query(this.TABELA_KVIZOVI, koloneRezulat, where,
-                whereArgs, groupBy, having, order);
-
-        int INDEX_KOLONE_IME = cursor.getColumnIndexOrThrow(KVIZ_NAZIV);
-        int INDEX_KOLONE_id = cursor.getColumnIndexOrThrow(KVIZ_ID);
-        int INDEX_KOLONE_kategorija = cursor.getColumnIndexOrThrow(KVIZ_KATEGORIJA);
-        int INDEX_KOLONE_pitanja = cursor.getColumnIndexOrThrow(KVIZ_PITANJA);
-        while(cursor.moveToNext()){
-            Log.d("ARSLANNN", cursor.getString(INDEX_KOLONE_IME) + "  ID  "+cursor.getString(INDEX_KOLONE_id) + "  KATE  " + cursor.getString(INDEX_KOLONE_kategorija) + "   PITANJA   " + cursor.getString(INDEX_KOLONE_pitanja));
-        }
-//kada završimo sa kursorom potrebno ga je zatvoriti
-        cursor.close();
-    }
-
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         if (oldVersion != newVersion) {
